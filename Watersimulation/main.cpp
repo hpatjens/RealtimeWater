@@ -213,7 +213,6 @@ struct {
 struct ProgramData {
 	GLuint id;
 	std::map<std::string, GLint> uniforms;
-	std::map<std::string, GLint> attributes;
 };
 
 std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<float(glm::vec2)> heightFunction)
@@ -703,7 +702,6 @@ ProgramData createWaterProgram()
 		std::make_tuple("content/Watersimulation/water.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -727,12 +725,6 @@ ProgramData createWaterProgram()
 	addUniform("TopViewMatrix");
 	addUniform("TopProjectionMatrix");
 
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vNormal");
-	addAttribute("vTexCoord");
-	addAttribute("vVertexPosition");
-
 	glUseProgram(0);
 
 	return programData;
@@ -747,7 +739,6 @@ ProgramData createSimpleWaterProgram()
 		std::make_tuple("content/Watersimulation/simplewater.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -756,10 +747,6 @@ ProgramData createSimpleWaterProgram()
 	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4{ 1.0f }));
-
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vNormal");
 
 	glUseProgram(0);
 
@@ -775,7 +762,6 @@ ProgramData createGroundProgram()
 		std::make_tuple("content/Watersimulation/ground.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -798,11 +784,6 @@ ProgramData createGroundProgram()
 	addUniform("SubSurfaceScatteringTexture");
 	addUniform("Time");
 
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vNormal");
-	addAttribute("vTexCoord");
-
 	glUseProgram(0);
 
 	return programData;
@@ -817,7 +798,6 @@ ProgramData createTextureProgram()
 		std::make_tuple("content/Watersimulation/texture.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -826,10 +806,6 @@ ProgramData createTextureProgram()
 	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	addUniform("Texture");
-
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vTexCoord");
 
 	glUseProgram(0);
 
@@ -845,7 +821,6 @@ ProgramData createCombineProgram()
 		std::make_tuple("content/Watersimulation/combine.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -854,10 +829,6 @@ ProgramData createCombineProgram()
 	addUniform("BackgroundDepthTexture");
 	addUniform("WaterTexture");
 	addUniform("WaterDepthTexture");
-
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vTexCoord");
 
 	glUseProgram(0);
 
@@ -874,7 +845,6 @@ ProgramData createNormalsProgram()
 		std::make_tuple("content/Watersimulation/normals.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -885,10 +855,6 @@ ProgramData createNormalsProgram()
 	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat3{ 1.0f }));
 	addUniform("NormalLength");
 	addUniform("NormalColor");
-
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vNormal");
 
 	glUseProgram(0);
 
@@ -904,7 +870,6 @@ ProgramData createSkyProgram()
 		std::make_tuple("content/Watersimulation/sky.frag", GL_FRAGMENT_SHADER) });
 
 	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-	auto addAttribute = [&](const std::string& name){  return programData.attributes[name] = glGetAttribLocation(programData.id, name.c_str()); };
 
 	glUseProgram(programData.id);
 
@@ -914,10 +879,6 @@ ProgramData createSkyProgram()
 	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("InverseViewProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	addUniform("SkyCubemap");
-
-	// Attributes
-	addAttribute("vPosition");
-	addAttribute("vTexCoord");
 
 	glUseProgram(0);
 
