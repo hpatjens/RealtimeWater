@@ -120,7 +120,7 @@ void initialize() {
 	}
 }
 
-void renderUnitQuad(const GLint attributePosition, const GLint attributeTexCoord)  {
+void renderUnitQuad()  {
 	glBindVertexArray(c_unitQuad.vertexArrayObject);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
@@ -465,19 +465,19 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	void render(const GLint attributePosition, const GLint attributeNormal, const GLuint attributeTexCoord) const
+	void render() const
 	{		
 		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glEnableVertexAttribArray(attributePosition);
-		glVertexAttribPointer(attributePosition, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), nullptr);
+		glEnableVertexAttribArray(Attributes::Position);
+		glVertexAttribPointer(Attributes::Position, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), nullptr);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glEnableVertexAttribArray(attributeNormal);
-		glVertexAttribPointer(attributeNormal, 3, GL_FLOAT, GL_TRUE, sizeof(glm::vec4), reinterpret_cast<void*>(sizeof(glm::vec4)));
+		glEnableVertexAttribArray(Attributes::Normal);
+		glVertexAttribPointer(Attributes::Normal, 3, GL_FLOAT, GL_TRUE, sizeof(glm::vec4), reinterpret_cast<void*>(sizeof(glm::vec4)));
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
-		glEnableVertexAttribArray(attributeTexCoord);
-		glVertexAttribPointer(attributeTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), reinterpret_cast<void*>(sizeof(glm::vec4) * 2));
+		glEnableVertexAttribArray(Attributes::TexCoord);
+		glVertexAttribPointer(Attributes::TexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), reinterpret_cast<void*>(sizeof(glm::vec4) * 2));
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
 
@@ -485,34 +485,9 @@ public:
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		glDisableVertexAttribArray(attributePosition);
-		glDisableVertexAttribArray(attributeNormal);
-		glDisableVertexAttribArray(attributeTexCoord);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	void render(const GLint attributePosition, const GLint attributeNormal) const
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glEnableVertexAttribArray(attributePosition);
-		glVertexAttribPointer(attributePosition, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glEnableVertexAttribArray(attributeNormal);
-		glVertexAttribPointer(attributeNormal, 3, GL_FLOAT, GL_TRUE, sizeof(glm::vec4), reinterpret_cast<void*>(sizeof(glm::vec4)));
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-
-		glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glDisableVertexAttribArray(attributePosition);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glDisableVertexAttribArray(attributeNormal);
+		glDisableVertexAttribArray(Attributes::Position);
+		glDisableVertexAttribArray(Attributes::Normal);
+		glDisableVertexAttribArray(Attributes::TexCoord);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
@@ -1141,7 +1116,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(waterWorldMatrix));
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightViewMatrix));
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightProjectionMatrix));
-		waterMesh.render(waterProgram.attributes.at("vPosition"), waterProgram.attributes.at("vNormal"));
+		waterMesh.render();
 		glViewport(0, 0, GLsizei(appData.framebufferSize.x), GLsizei(appData.framebufferSize.y));
 	}
 	glUseProgram(0);
@@ -1160,7 +1135,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topViewMatrix));
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topProjectionMatrix));
-		groundMesh.render(waterProgram.attributes.at("vPosition"), waterProgram.attributes.at("vNormal"));
+		groundMesh.render();
 		glViewport(0, 0, GLsizei(appData.framebufferSize.x), GLsizei(appData.framebufferSize.y));
 	} 
 	glUseProgram(0);
@@ -1185,7 +1160,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 		glUniform1i(skyProgram.uniforms.at("SkyCubemap"), 0);
 		
 		glDisable(GL_DEPTH_TEST);
-		renderUnitQuad(skyProgram.attributes.at("vPosition"), skyProgram.attributes.at("vTexCoord"));
+		renderUnitQuad();
 		glEnable(GL_DEPTH_TEST);
 	}
 	glUseProgram(groundProgram.id);
@@ -1230,7 +1205,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 
 		glActiveTexture(GL_TEXTURE0);
 		
-		groundMesh.render(groundProgram.attributes.at("vPosition"), groundProgram.attributes.at("vNormal"), groundProgram.attributes.at("vTexCoord"));	
+		groundMesh.render();
 	}
 	glUseProgram(0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -1288,10 +1263,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 		glActiveTexture(GL_TEXTURE0);
 
 		glDisable(GL_CULL_FACE);
-		waterMesh.render(
-			waterProgram.attributes.at("vPosition"), 
-			waterProgram.attributes.at("vNormal"), 
-			waterProgram.attributes.at("vTexCoord"));
+		waterMesh.render();
 		glEnable(GL_CULL_FACE);
 	}
 	glUseProgram(0);
@@ -1322,7 +1294,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 		glBindTexture(GL_TEXTURE_2D, appData.waterFramebuffer.depthTexture);
 		glUniform1i(combineProgram.uniforms.at("WaterDepthTexture"), 3);
 
-		renderUnitQuad(textureProgram.attributes.at("vPosition"), textureProgram.attributes.at("vTexCoord"));
+		renderUnitQuad();
 	}
 	glUseProgram(0);
 
@@ -1361,7 +1333,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 
 			glUniform1i(textureProgram.uniforms.at("Texture"), 0);
 
-			renderUnitQuad(textureProgram.attributes.at("vPosition"), textureProgram.attributes.at("vTexCoord"));
+			renderUnitQuad();
 		}
 		glUseProgram(0);
 	}
@@ -1375,12 +1347,12 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 			glUniformMatrix4fv(normalsProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(waterWorldMatrix));
 			glUniformMatrix3fv(normalsProgram.uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(waterNormalMatrix));
 			glUniform4f(normalsProgram.uniforms.at("NormalColor"), 0, 0, 1, 1);
-			waterMesh.render(normalsProgram.attributes.at("vPosition"), normalsProgram.attributes.at("vNormal"));
+			waterMesh.render();
 
 			glUniformMatrix4fv(normalsProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(groundWorldMatrix));
 			glUniformMatrix3fv(normalsProgram.uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(groundNormalMatrix));
 			glUniform4f(normalsProgram.uniforms.at("NormalColor"), 0, 1, 0, 1);
-			groundMesh.render(normalsProgram.attributes.at("vPosition"), normalsProgram.attributes.at("vNormal"));
+			groundMesh.render();
 		}
 		glUseProgram(0);
 	}
