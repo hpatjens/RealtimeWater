@@ -1,7 +1,7 @@
 #version 430 core
 
-in vec4 vPosition;
-in vec4 vTexCoord;
+layout (location = 0) in vec4 vPosition;
+layout (location = 2) in vec4 vTexCoord;
 
 out vec4 fPosition;
 out vec4 fTexCoord;

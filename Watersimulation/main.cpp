@@ -49,8 +49,82 @@
 #define for0(VAR, MAX) for (std::remove_const<decltype(MAX)>::type VAR = 0; VAR < (MAX); VAR++)
 #define breakcase break; case
 #define breakdefault break; default
+#define intern static
 
 const auto IDENTITY = glm::mat4(1.0f);
+
+struct Attributes {
+	enum {
+		Position = 0,
+		Normal = 1,
+		TexCoord = 2,
+		VertexPosition = 3
+	};
+};
+
+struct Geometry {
+	GLuint arrayBuffer;
+	GLuint vertexArrayObject;
+};
+
+intern Geometry c_unitQuad;
+
+struct Vertex {
+	glm::vec3 position;
+	glm::vec3 normal;
+	glm::vec2 texCoord;
+};
+
+void setAttribPointer(GLuint vertexArrayObject, GLuint location, GLuint buffer, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLuint offset) {
+	assert((glIsBuffer(buffer) != GL_FALSE));
+
+	GLint previousBuffer;
+	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &previousBuffer);
+	{
+		GLint previousVAO;
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousVAO);
+		{				
+			glBindVertexArray(vertexArrayObject);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer);
+			glEnableVertexAttribArray(location);
+			glVertexAttribPointer(location, size, type, normalized, stride, reinterpret_cast<void*>(offset));
+		}
+		glBindVertexArray(previousVAO);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, previousBuffer);
+}
+
+void initialize() {
+	// Unit Quad
+	{
+		Vertex unitQuadVertices[] {
+			{ { -1, -1, 0 }, { 0, 1, 0 }, { 0, 0 } },
+			{ {  1, -1, 0 }, { 0, 1, 0 }, { 1, 0 } },
+			{ {  1,  1, 0 }, { 0, 1, 0 }, { 1, 1 } },
+
+			{ { -1, -1, 0 }, { 0, 1, 0 }, { 0, 0 } },
+			{ {  1,  1, 0 }, { 0, 1, 0 }, { 1, 1 } },
+			{ { -1,  1, 0 }, { 0, 1, 0 }, { 0, 1 } },
+		};
+
+		// Array Buffer
+		glGenBuffers(1, &c_unitQuad.arrayBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, c_unitQuad.arrayBuffer);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(unitQuadVertices), unitQuadVertices, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// Vertex Array Object
+		glGenVertexArrays(1, &c_unitQuad.vertexArrayObject);
+		setAttribPointer(c_unitQuad.vertexArrayObject, Attributes::Position, c_unitQuad.arrayBuffer, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+		setAttribPointer(c_unitQuad.vertexArrayObject, Attributes::TexCoord, c_unitQuad.arrayBuffer, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord));
+	}
+}
+
+void renderUnitQuad(const GLint attributePosition, const GLint attributeTexCoord)  {
+	glBindVertexArray(c_unitQuad.vertexArrayObject);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
 
 struct Errors {
 	enum { EverythingFine = 0, Fatal = 1 };
@@ -97,10 +171,6 @@ struct FramebufferData {
 	GLuint id;
 };
 
-struct SceneNode {
-	glm::mat4 worldMatrix;
-};
-
 struct {
 	GLFWwindow* window;
 
@@ -126,7 +196,6 @@ struct {
 	GLuint noiseTexture;
 	GLuint noiseNormalTexture;
 	GLuint causticTexture;
-	GLuint foamTexture;
 	GLuint subsurfaceScatteringTexture;
 
 	GLuint skyCubemap;
@@ -135,7 +204,7 @@ struct {
 	glm::mat4 lightProjectionMatrix;
 	glm::mat4 lightViewMatrix;
 
-	SceneNode camera;
+	glm::mat4 camera;
 	glm::vec2 mousePosition;
 	bool rightMouseButtonPressed;
 	bool moveDirection[Direction::DirectionCount];
@@ -145,89 +214,6 @@ struct ProgramData {
 	GLuint id;
 	std::map<std::string, GLint> uniforms;
 	std::map<std::string, GLint> attributes;
-};
-
-struct Vertex {
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec2 texCoord;
-};
-
-class UnitQuad
-{
-public:
-	UnitQuad()
-	{
-		Vertex unitQuadVertices[]
-		{
-			{ glm::vec3{ -1, -1, 0 }, glm::vec3{ 0, 1, 0 }, glm::vec2{ 0, 0 } },
-			{ glm::vec3{ 1, -1, 0 }, glm::vec3{ 0, 1, 0 }, glm::vec2{ 1, 0 } },
-			{ glm::vec3{ 1, 1, 0 }, glm::vec3{ 0, 1, 0 }, glm::vec2{ 1, 1 } },
-
-			{ glm::vec3{ -1, -1, 0 }, glm::vec3{ 0, 1, 0 }, glm::vec2{ 0, 0 } },
-			{ glm::vec3{ 1, 1, 0 }, glm::vec3{ 0, 1, 0 }, glm::vec2{ 1, 1 } },
-			{ glm::vec3{ -1, 1, 0 }, glm::vec3{ 0, 1, 0 }, glm::vec2{ 0, 1 } },
-		};
-
-		// Array Buffer
-		glGenBuffers(1, &m_arrayBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_arrayBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(unitQuadVertices), unitQuadVertices, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	void render(const GLint attributePosition, const GLint attributeTexCoord, const GLint attributeNormal) const
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_arrayBuffer);
-
-		glEnableVertexAttribArray(attributePosition);
-		glVertexAttribPointer(attributePosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
-		glEnableVertexAttribArray(attributeNormal);
-		glVertexAttribPointer(attributeNormal, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normal)));
-		glEnableVertexAttribArray(attributeTexCoord);
-		glVertexAttribPointer(attributeTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, texCoord)));
-
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		glDisableVertexAttribArray(attributePosition);
-		glDisableVertexAttribArray(attributeNormal);
-		glDisableVertexAttribArray(attributeTexCoord);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	void render(const GLint attributePosition, const GLint attributeTexCoord) const
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_arrayBuffer);
-
-		glEnableVertexAttribArray(attributePosition);
-		glVertexAttribPointer(attributePosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
-		glEnableVertexAttribArray(attributeTexCoord);
-		glVertexAttribPointer(attributeTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, texCoord)));
-
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		glDisableVertexAttribArray(attributePosition);
-		glDisableVertexAttribArray(attributeTexCoord);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	void render(const GLint attributePosition) const
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_arrayBuffer);
-
-		glEnableVertexAttribArray(attributePosition);
-		glVertexAttribPointer(attributePosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
-
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		glDisableVertexAttribArray(attributePosition);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-private:
-	GLuint m_arrayBuffer;
 };
 
 std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<float(glm::vec2)> heightFunction)
@@ -1109,7 +1095,7 @@ glm::mat3 from(const glm::mat4 m)
 	return glm::make_mat3(a);
 }
 
-void render(const float deltaTime, const glm::mat4& projectionMatrix, UnitQuad& unitQuad, 
+void render(const float deltaTime, const glm::mat4& projectionMatrix,
 	const Mesh& waterMesh, const Mesh& groundMesh, const ProgramData& waterProgram, 
 	const ProgramData& simpleWaterProgram, const ProgramData& groundProgram, 
 	const ProgramData& textureProgram, const ProgramData& combineProgram, 
@@ -1123,7 +1109,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix, UnitQuad& 
 
 	glm::mat4 viewMatrix;
 	if (appData.manualCamera)
-		viewMatrix = glm::inverse(appData.camera.worldMatrix);
+		viewMatrix = glm::inverse(appData.camera);
 	else
 		viewMatrix = glm::lookAt(glm::vec3(x, 0.2f, z), glm::vec3(0, -0.2f, 0), glm::vec3(0, 1, 0));
 	
@@ -1199,7 +1185,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix, UnitQuad& 
 		glUniform1i(skyProgram.uniforms.at("SkyCubemap"), 0);
 		
 		glDisable(GL_DEPTH_TEST);
-		unitQuad.render(skyProgram.attributes.at("vPosition"), skyProgram.attributes.at("vTexCoord"));
+		renderUnitQuad(skyProgram.attributes.at("vPosition"), skyProgram.attributes.at("vTexCoord"));
 		glEnable(GL_DEPTH_TEST);
 	}
 	glUseProgram(groundProgram.id);
@@ -1293,8 +1279,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix, UnitQuad& 
 		glUniform1i(waterProgram.uniforms.at("SubSurfaceScatteringTexture"), 5);
 
 		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_2D, appData.foamTexture);
-		glUniform1i(waterProgram.uniforms.at("FoamTexture"), 6);
+		// Empty
 
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, appData.topFramebuffer.depthTexture);
@@ -1337,7 +1322,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix, UnitQuad& 
 		glBindTexture(GL_TEXTURE_2D, appData.waterFramebuffer.depthTexture);
 		glUniform1i(combineProgram.uniforms.at("WaterDepthTexture"), 3);
 
-		unitQuad.render(textureProgram.attributes.at("vPosition"), textureProgram.attributes.at("vTexCoord"));
+		renderUnitQuad(textureProgram.attributes.at("vPosition"), textureProgram.attributes.at("vTexCoord"));
 	}
 	glUseProgram(0);
 
@@ -1376,7 +1361,7 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix, UnitQuad& 
 
 			glUniform1i(textureProgram.uniforms.at("Texture"), 0);
 
-			unitQuad.render(textureProgram.attributes.at("vPosition"), textureProgram.attributes.at("vTexCoord"));
+			renderUnitQuad(textureProgram.attributes.at("vPosition"), textureProgram.attributes.at("vTexCoord"));
 		}
 		glUseProgram(0);
 	}
@@ -1461,12 +1446,12 @@ GLuint createCubemap()
 void update() {
 	float cameraSpeed = 0.01f;
 
-	if (appData.moveDirection[Direction::Front]) appData.camera.worldMatrix = glm::translate(appData.camera.worldMatrix, glm::vec3{ 0, 0, -1 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Back])  appData.camera.worldMatrix = glm::translate(appData.camera.worldMatrix, glm::vec3{ 0, 0, +1 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Right]) appData.camera.worldMatrix = glm::translate(appData.camera.worldMatrix, glm::vec3{ +1, 0, 0 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Left])  appData.camera.worldMatrix = glm::translate(appData.camera.worldMatrix, glm::vec3{ -1, 0, 0 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Up])	 appData.camera.worldMatrix = glm::translate(appData.camera.worldMatrix, glm::vec3{ 0, +1, 0 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Down])  appData.camera.worldMatrix = glm::translate(appData.camera.worldMatrix, glm::vec3{ 0, -1, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Front]) appData.camera = glm::translate(appData.camera, glm::vec3{ 0, 0, -1 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Back])  appData.camera = glm::translate(appData.camera, glm::vec3{ 0, 0, +1 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Right]) appData.camera = glm::translate(appData.camera, glm::vec3{ +1, 0, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Left])  appData.camera = glm::translate(appData.camera, glm::vec3{ -1, 0, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Up])	 appData.camera = glm::translate(appData.camera, glm::vec3{ 0, +1, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Down])  appData.camera = glm::translate(appData.camera, glm::vec3{ 0, -1, 0 } * cameraSpeed);
 
 	if (appData.manualCamera)
 	{
@@ -1479,14 +1464,14 @@ void update() {
 		{
 			auto toVec3 = [](glm::vec4 v){ return glm::vec3{ v.x / v.w, v.y / v.w, v.z / v.w }; };
 
-			auto normalMatrix = glm::transpose(glm::inverse(appData.camera.worldMatrix));
+			auto normalMatrix = glm::transpose(glm::inverse(appData.camera));
 			auto yAxisInWorld = glm::inverse(normalMatrix) * glm::vec4{ 0, 1, 0, 1 };
 			auto yAxisInWorldWDiv = toVec3(yAxisInWorld);
 			
 			auto xAxis = glm::vec3{ 1, 0, 0 };
 
-			appData.camera.worldMatrix = glm::rotate(appData.camera.worldMatrix, float(offset.y * rotationSpeed), xAxis);
-			appData.camera.worldMatrix = glm::rotate(appData.camera.worldMatrix, float(offset.x * rotationSpeed), yAxisInWorldWDiv);
+			appData.camera = glm::rotate(appData.camera, float(offset.y * rotationSpeed), xAxis);
+			appData.camera = glm::rotate(appData.camera, float(offset.x * rotationSpeed), yAxisInWorldWDiv);
 			
 		}
 
@@ -1519,6 +1504,8 @@ void simulateWater(const Mesh& waterMesh, const Mesh& terrain, const ProgramData
 int main(int argc, char* argv[]) {
 	appData.window = createContext();
 
+	initialize();
+
 	if (GLEW_ARB_debug_output) {
 		glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 			if (type == GL_DEBUG_TYPE_ERROR_ARB) {
@@ -1534,7 +1521,7 @@ int main(int argc, char* argv[]) {
 	appData.framebufferSize = glm::vec2{ framebufferWidth, framebufferHeight };
 
 	// camera
-	appData.camera.worldMatrix = glm::mat4{ 1 };
+	appData.camera = IDENTITY;
 	appData.topViewMatrix = glm::lookAt(glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.5f, 0.0f, 0.5f }, glm::vec3{ 1, 0, 0 });
 	appData.topProjectionMatrix = glm::ortho(-0.5, 0.5, -0.5, 0.5);
 
@@ -1550,7 +1537,6 @@ int main(int argc, char* argv[]) {
 	appData.noiseTexture = importTexture("content/Watersimulation/noiseTexture.png");
 	appData.noiseNormalTexture = importTexture("content/Watersimulation/noiseNormalTexture.jpg");
 	appData.causticTexture = importTexture("content/Watersimulation/causticTexture.png");
-	appData.foamTexture = importTexture("content/Watersimulation/foam.jpg");
 	appData.subsurfaceScatteringTexture = createSubsurfaceScatteringTexture();
 
 	// cubemap
@@ -1597,7 +1583,6 @@ int main(int argc, char* argv[]) {
 	appData.waterMapFramebuffer = createGeneralFramebuffer(appData.waterMapSize.x, appData.waterMapSize.y);
 	appData.topFramebuffer = createGeneralFramebuffer(appData.topViewSize.x, appData.topViewSize.y);
 
-	UnitQuad unitQuad;
 	auto groundHeightFunction = [](glm::vec2 coordinate)
 	{
 		const auto COORDINATE_STRETCH = 5.0f;
@@ -1647,7 +1632,7 @@ int main(int argc, char* argv[]) {
 		simulateWater(waterMesh, groundMesh, waterSimulationProgram, timeDelta, time);
 
 		// render the scene
-		render(timeDelta, appData.projectionMatrix, unitQuad, waterMesh, groundMesh, waterProgramData, simpleWaterProgramData, groundProgramData, textureProgramData, combineProgramData, normalsProgramData, skyProgramData);
+		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh, waterProgramData, simpleWaterProgramData, groundProgramData, textureProgramData, combineProgramData, normalsProgramData, skyProgramData);
 
 		waterMesh.swapBuffer();
 

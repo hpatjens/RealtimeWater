@@ -135,7 +135,7 @@ void main()
 	float topWaterDepth = waterHeight - groundHeight;
 	vec4 foam = texture2D(FoamTexture, fTexCoord * 20) * max(0, (1.0 - 50*(0.07 + topWaterDepth)));
 	
-	vec4 waterColor = mix(reflection, refraction, fresnel) + foam;
+	vec4 waterColor = mix(reflection, refraction, fresnel);
 	
 	FragColor = mix(background, waterColor, min(1, 100 * depthWorld));
 }
