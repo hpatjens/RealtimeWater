@@ -8,24 +8,22 @@ in float fVelocity;
 
 out vec4 FragColor;
 
-uniform vec2 FramebufferSize;
-uniform sampler2D BackgroundColorTexture;
-uniform sampler2D BackgroundDepthTexture;
-uniform sampler2D FoamTexture;
-uniform sampler2D TopViewDepthTexture;
-uniform mat4 TopViewMatrix;
-uniform mat4 TopProjectionMatrix;
-
-uniform sampler2D NoiseTexture;
-uniform sampler2D NoiseNormalTexture;
-uniform sampler1D SubSurfaceScatteringTexture;
-
-uniform mat4 ProjectionMatrix;
 uniform mat4 ViewMatrix;
-uniform float DeltaTime;
-uniform float Time;
+uniform mat4 ProjectionMatrix;
 
-uniform samplerCube SkyCubemap;
+layout(location = 4) uniform vec2 FramebufferSize;
+layout(location = 5) uniform mat4 TopViewMatrix;
+layout(location = 6) uniform mat4 TopProjectionMatrix;
+layout(location = 7) uniform float DeltaTime;
+layout(location = 8) uniform float Time;
+
+layout(binding = 0) uniform sampler2D BackgroundColorTexture;
+layout(binding = 1) uniform sampler2D BackgroundDepthTexture;
+layout(binding = 2) uniform sampler2D TopViewDepthTexture;
+layout(binding = 3) uniform sampler2D NoiseTexture;
+layout(binding = 4) uniform sampler2D NoiseNormalTexture;
+layout(binding = 5) uniform sampler1D SubSurfaceScatteringTexture;
+layout(binding = 6) uniform samplerCube SkyCubemap;
 
 float inverseDepthRangeTransformation(float depth)
 {
@@ -130,10 +128,10 @@ void main()
 	float fresnel = dot(eyeVector, normal);
 
 	// Foam
-	float groundHeight = getTopWorldPosition(fWorldPosition).y;
-	float waterHeight = fWorldPosition.y / fWorldPosition.w;
-	float topWaterDepth = waterHeight - groundHeight;
-	vec4 foam = texture2D(FoamTexture, fTexCoord * 20) * max(0, (1.0 - 50*(0.07 + topWaterDepth)));
+	//float groundHeight = getTopWorldPosition(fWorldPosition).y;
+	//float waterHeight = fWorldPosition.y / fWorldPosition.w;
+	//float topWaterDepth = waterHeight - groundHeight;
+	//vec4 foam = texture2D(FoamTexture, fTexCoord * 20) * max(0, (1.0 - 50*(0.07 + topWaterDepth)));
 	
 	vec4 waterColor = mix(reflection, refraction, fresnel);
 	
