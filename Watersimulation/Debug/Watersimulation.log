@@ -1,4 +1,4 @@
-﻿Der Buildvorgang wurde am 03.01.2016 11:18:04 gestartet.
+﻿Der Buildvorgang wurde am 03.01.2016 11:21:03 gestartet.
      1>Projekt "G:\Daten\Softwareentwicklung\Local\Watersimulation\Watersimulation\Watersimulation.vcxproj" auf Knoten "2", Build Ziel(e).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
@@ -110,4 +110,4 @@
 
 Build erfolgreich.
 
-Verstrichene Zeit 00:00:01.06
+Verstrichene Zeit 00:00:01.19

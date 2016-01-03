@@ -364,7 +364,7 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	Mesh(int dimension, std::function<float(glm::vec2)> heightFunction, std::function<float(glm::vec2)> groundHeightFunction)
+	Mesh(int dimension, std::function<float(glm::vec2)> heightFunction)
 		: m_dimension{ dimension }
 	{
 		auto vertices = createMeshVertices(dimension, heightFunction);
@@ -1464,6 +1464,8 @@ int main(int argc, char* argv[]) {
 	appData.waterMapFramebuffer = createGeneralFramebuffer(appData.waterMapSize.x, appData.waterMapSize.y);
 	appData.topFramebuffer = createGeneralFramebuffer(appData.topViewSize.x, appData.topViewSize.y);
 
+	int terrainSize = 200;
+
 	auto groundHeightFunction = [](glm::vec2 coordinate)
 	{
 		const auto COORDINATE_STRETCH = 5.0f;
@@ -1478,20 +1480,10 @@ int main(int argc, char* argv[]) {
 
 		return static_cast<float>(HEIGHT * (0.1 + EFUNCTION_WEIGHT * efunction + NOISE_WEIGHT * glm::simplex(coordinate * NOISE_STRETCH)));
 	};
-	Terrain terrain{ 200, 200, groundHeightFunction };
-	//for0(i, 500)
-	//	terrain.erode();
-	Mesh groundMesh{ terrain };
+	Terrain terrain(terrainSize, terrainSize, groundHeightFunction);
+	Mesh groundMesh(terrain);
 
-	auto waterHeightFunction = [](glm::vec2 coordinate)
-	{
-		return 0;
-		//glm::simplex(glm::vec2{ coordinate.x * 10, coordinate.y * 10 }) * 0.005f + 
-		//glm::simplex(glm::vec2{ (coordinate.x + 1561) * 30, (coordinate.y + 78) * 30 }) * 0.0001f;
-	};
-	Mesh waterMesh{ 200, waterHeightFunction, groundHeightFunction };
-
-
+	Mesh waterMesh(terrainSize, [](glm::vec2 coordinate) { return 0; });
 
 	FpsCounter fpsCounter;
 
