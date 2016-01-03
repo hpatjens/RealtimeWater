@@ -6,9 +6,9 @@ layout (location = 2) in vec4 vTexCoord;
 out vec4 fPosition;
 out vec4 fTexCoord;
 
-uniform mat4 ProjectionMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 WorldMatrix;
+layout(location = 0) uniform mat4 WorldMatrix;
+layout(location = 1) uniform mat4 ViewMatrix;
+layout(location = 2) uniform mat4 ProjectionMatrix;
 
 void main()
 {

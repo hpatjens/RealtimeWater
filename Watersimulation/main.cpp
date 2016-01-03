@@ -381,6 +381,53 @@ struct GroundProgram : public Program {
 	void subSurfaceScatteringTexture(GLuint id) { glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_1D, id); }
 };
 
+struct SkyProgram : public Program {
+	struct Uniforms {
+		enum {
+			WorldMatrix = 0,
+			ViewMatrix = 1,
+			ProjectionMatrix = 2,
+			InverseViewProjectionMatrix = 3,
+		};
+	};
+
+	void initialize() {
+		id = createProgram({
+			std::make_tuple("content/Watersimulation/sky.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/Watersimulation/sky.frag", GL_FRAGMENT_SHADER) 
+		});
+	}
+
+	void worldMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WorldMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void viewMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ViewMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void projectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void inverseViewProjectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::InverseViewProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void skyCubemap(GLuint id) { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_CUBE_MAP, id); }
+};
+
+struct SimpleWaterProgram : public Program {
+	struct Uniforms {
+		enum {
+			WorldMatrix = 0,
+			ViewMatrix = 1,
+			ProjectionMatrix = 2,
+			NormalMatrix = 3
+		};
+	};
+
+	void initialize() {
+		id = createProgram({
+			std::make_tuple("content/Watersimulation/simplewater.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/Watersimulation/simplewater.frag", GL_FRAGMENT_SHADER) 
+		});
+	}
+	
+	void worldMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WorldMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void viewMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ViewMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void projectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void normalMatrix(const Mat3& m) { glUniformMatrix3fv(Uniforms::NormalMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+};
+
 struct {
 	GLFWwindow* window;
 
@@ -413,11 +460,15 @@ struct {
 	WaterProgram waterProgram;
 	CombineProgram combineProgram;
 	GroundProgram groundProgram;
+	SkyProgram skyProgram;
+	SimpleWaterProgram simpleWaterProgram;
 
 	void initialize() {
 		waterProgram.initialize();
 		combineProgram.initialize();
 		groundProgram.initialize();
+		skyProgram.initialize();
+		simpleWaterProgram.initialize();
 	}
 
 	Vec3 lightPos;
@@ -1098,71 +1149,76 @@ void render(const float dt, const Mat4& projectionMatrix,
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 	//
-	// render top view
+	// Render top view
 	//
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, appData.topFramebuffer.id);
-	glClearColor(0.1f, 0.2f, 0.7f, 1.0f);
-	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(simpleWaterProgram.id);
 	{
-		glViewport(0, 0, appData.topViewSize.x, appData.topViewSize.y);
-		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topViewMatrix));
-		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topProjectionMatrix));
-		groundMesh.render();
-		glViewport(0, 0, GLsizei(appData.framebufferSize.x), GLsizei(appData.framebufferSize.y));
-	} 
-	glUseProgram(0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, appData.topFramebuffer.id);
+		glClearColor(0.1f, 0.2f, 0.7f, 1.0f);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		Program::use(appData.simpleWaterProgram);
+		{
+			appData.simpleWaterProgram.worldMatrix(IDENTITY4);
+			appData.simpleWaterProgram.viewMatrix(appData.topViewMatrix);
+			appData.simpleWaterProgram.projectionMatrix(appData.topProjectionMatrix);
+			appData.simpleWaterProgram.normalMatrix(IDENTITY3);
+
+			glViewport(0, 0, appData.topViewSize.x, appData.topViewSize.y);
+			groundMesh.render();
+			glViewport(0, 0, GLsizei(appData.framebufferSize.x), GLsizei(appData.framebufferSize.y));
+		} 
+		Program::unuse();
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	}
 
 	//
-	// render ground
+	// Render Ground
 	//
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, appData.backgroundFramebuffer.id);
-	glClearColor(0.1f, 0.5f, 0.2f, 1.0f);
-	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
-	glUseProgram(skyProgram.id);
 	{
-		auto inverseViewProjectionMatrix = glm::inverse(projectionMatrix * viewMatrix);
-		glUniformMatrix4fv(skyProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-		glUniformMatrix4fv(skyProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-		glUniformMatrix4fv(skyProgram.uniforms.at("InverseViewProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(inverseViewProjectionMatrix));
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, appData.backgroundFramebuffer.id);
+		glClearColor(0.1f, 0.5f, 0.2f, 1.0f);
+		glClearDepth(1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+		Program::use(appData.skyProgram);
+		{
+			auto inverseViewProjectionMatrix = glm::inverse(projectionMatrix * viewMatrix);
+			appData.skyProgram.worldMatrix(IDENTITY4);
+			appData.skyProgram.viewMatrix(viewMatrix);
+			appData.skyProgram.projectionMatrix(projectionMatrix);
+			appData.skyProgram.inverseViewProjectionMatrix(inverseViewProjectionMatrix);
 		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, appData.skyCubemap);
-		glUniform1i(skyProgram.uniforms.at("SkyCubemap"), 0);
-		
-		glDisable(GL_DEPTH_TEST);
-		renderUnitQuad();
-		glEnable(GL_DEPTH_TEST);
-	}
-	Program::use(appData.groundProgram);
-	{
-		appData.groundProgram.worldMatrix(groundWorldMatrix);
-		appData.groundProgram.viewMatrix(viewMatrix);
-		appData.groundProgram.projectionMatrix(projectionMatrix);
-		appData.groundProgram.normalMatrix(IDENTITY3);
-		appData.groundProgram.waterMapProjectionMatrix(appData.lightProjectionMatrix);
-		appData.groundProgram.waterMapViewMatrix(appData.lightViewMatrix);
-		appData.groundProgram.lightPosition(appData.lightPos);
-		appData.groundProgram.grassTextureScale(24.0f);
-		appData.groundProgram.sandTextureScale(36.0f);
-		appData.groundProgram.time(time);
-		
-		appData.groundProgram.waterMapDepth(appData.waterMapFramebuffer.depthTexture);
-		appData.groundProgram.waterMapNormals(appData.waterMapFramebuffer.colorTexture);
-		appData.groundProgram.grassTexture(appData.grassTexture);
-		appData.groundProgram.sandTexture(appData.sandTexture);
-		appData.groundProgram.noiseNormalTexture(appData.noiseNormalTexture);
-		appData.groundProgram.causticTexture(appData.causticTexture);
-		appData.groundProgram.subSurfaceScatteringTexture(appData.subsurfaceScatteringTexture);
+			appData.skyProgram.skyCubemap(appData.skyCubemap);
 
-		groundMesh.render();
+			glDisable(GL_DEPTH_TEST);
+			renderUnitQuad();
+			glEnable(GL_DEPTH_TEST);
+		}
+		Program::use(appData.groundProgram);
+		{
+			appData.groundProgram.worldMatrix(groundWorldMatrix);
+			appData.groundProgram.viewMatrix(viewMatrix);
+			appData.groundProgram.projectionMatrix(projectionMatrix);
+			appData.groundProgram.normalMatrix(IDENTITY3);
+			appData.groundProgram.waterMapProjectionMatrix(appData.lightProjectionMatrix);
+			appData.groundProgram.waterMapViewMatrix(appData.lightViewMatrix);
+			appData.groundProgram.lightPosition(appData.lightPos);
+			appData.groundProgram.grassTextureScale(24.0f);
+			appData.groundProgram.sandTextureScale(36.0f);
+			appData.groundProgram.time(time);
+		
+			appData.groundProgram.waterMapDepth(appData.waterMapFramebuffer.depthTexture);
+			appData.groundProgram.waterMapNormals(appData.waterMapFramebuffer.colorTexture);
+			appData.groundProgram.grassTexture(appData.grassTexture);
+			appData.groundProgram.sandTexture(appData.sandTexture);
+			appData.groundProgram.noiseNormalTexture(appData.noiseNormalTexture);
+			appData.groundProgram.causticTexture(appData.causticTexture);
+			appData.groundProgram.subSurfaceScatteringTexture(appData.subsurfaceScatteringTexture);
+
+			groundMesh.render();
+		}
+		Program::unuse();
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	}
-	Program::unuse();
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	
 	//
 	// Render Water

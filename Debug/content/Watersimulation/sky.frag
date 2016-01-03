@@ -5,16 +5,14 @@ in vec4 fTexCoord;
 
 out vec4 FragColor;
 
-uniform samplerCube SkyCubemap;
-
-uniform mat4 ProjectionMatrix;
-uniform mat4 ViewMatrix;
 uniform mat4 WorldMatrix;
+uniform mat4 ViewMatrix;
+uniform mat4 ProjectionMatrix;
+layout(location = 3) uniform mat4 InverseViewProjectionMatrix;
 
-uniform mat4 InverseViewProjectionMatrix;
+layout(binding = 0) uniform samplerCube SkyCubemap;
 
-void main()
-{
+void main() {
 	vec4 viewRayFront = vec4(fTexCoord.xy * 2.0 - 1.0, -1.0, 1.0);
 	vec4 viewRayBack  = vec4(fTexCoord.xy * 2.0 - 1.0,  1.0, 1.0);
 		
@@ -28,23 +26,3 @@ void main()
 	
 	FragColor = texture(SkyCubemap, viewRayWorld);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
