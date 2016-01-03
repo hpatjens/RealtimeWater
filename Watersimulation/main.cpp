@@ -307,8 +307,20 @@ struct WaterProgram : public Program {
 	void noiseNormalTexture(GLuint id) { glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, id); }
 	void subSurfaceScatteringTexture(GLuint id) { glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_1D, id); }
 	void skyCubemapTexture(GLuint id) { glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_CUBE_MAP, id); }
+};
 
-	std::map<std::string, GLint> uniforms;	
+struct CombineProgram : public Program {
+	void initialize() {
+		id = createProgram({
+			std::make_tuple("content/Watersimulation/combine.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/Watersimulation/combine.frag", GL_FRAGMENT_SHADER) 
+		});
+	}
+
+	void backgroundColorTexture(GLuint id) { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, id); }
+	void backgroundDepthTexture(GLuint id) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, id); }
+	void waterColorTexture(GLuint id) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, id); }
+	void waterDepthTexture(GLuint id) { glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, id); }
 };
 
 struct {
@@ -341,9 +353,11 @@ struct {
 	GLuint skyCubemap;
 
 	WaterProgram waterProgram;
+	CombineProgram combineProgram;
 
 	void initialize() {
 		waterProgram.initialize();
+		combineProgram.initialize();
 	}
 
 	Vec3 lightPos;
@@ -809,21 +823,7 @@ ProgramData createCombineProgram()
 {
 	ProgramData programData;
 
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/combine.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/combine.frag", GL_FRAGMENT_SHADER) });
 
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	addUniform("BackgroundTexture");
-	addUniform("BackgroundDepthTexture");
-	addUniform("WaterTexture");
-	addUniform("WaterDepthTexture");
-
-	glUseProgram(0);
 
 	return programData;
 }
@@ -1205,30 +1205,23 @@ void render(const float dt, const Mat4& projectionMatrix,
 	//
 	//	combine Framebuffer
 	//
-	glDisable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glUseProgram(combineProgram.id);
+	Program::use(appData.combineProgram);
 	{
 		glClearColor(0.5f, 0.5f, 0.2f, 1.0f);
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, appData.backgroundFramebuffer.colorTexture);
-		glUniform1i(combineProgram.uniforms.at("BackgroundTexture"), 0);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, appData.backgroundFramebuffer.depthTexture);
-		glUniform1i(combineProgram.uniforms.at("BackgroundDepthTexture"), 1);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, appData.waterFramebuffer.colorTexture);
-		glUniform1i(combineProgram.uniforms.at("WaterTexture"), 2);
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, appData.waterFramebuffer.depthTexture);
-		glUniform1i(combineProgram.uniforms.at("WaterDepthTexture"), 3);
+		appData.combineProgram.backgroundColorTexture(appData.backgroundFramebuffer.colorTexture);
+		appData.combineProgram.backgroundDepthTexture(appData.backgroundFramebuffer.depthTexture);
+		appData.combineProgram.waterColorTexture(appData.waterFramebuffer.colorTexture);
+		appData.combineProgram.waterDepthTexture(appData.waterFramebuffer.depthTexture);
+
+		glDisable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		renderUnitQuad();
 	}
-	glUseProgram(0);
+	Program::unuse();
 
 
 	if (appData.renderMode != RenderMode::Normal)
