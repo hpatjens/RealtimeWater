@@ -284,58 +284,6 @@ public:
 	int height() const { return m_height; }
 	float data(int x, int y) const { return m_data[index(x, y)]; }
 
-	void erode()
-	{
-		auto newData = m_data;
-		for0(x, m_width)
-			for0(y, m_height)
-			{
-				auto talus = 0.2f;
-				auto cellSize = 1.0f / m_width;
-				auto slopeDifference = cellSize * tan(talus);
-
-				// ensure v is between 0 and m_width
-				auto cx = [&](int v){ return std::max<int>(0, std::min<int>(v, m_width - 1)); };
-				auto cy = [&](int v){ return std::max<int>(0, std::min<int>(v, m_height - 1)); };
-
-				auto myindex = index(x, y);
-				auto myheight = m_data[myindex];
-
-				auto erodeNeighbor = [&](int neighborIndex)
-				{
-					auto differenceToPositiveX = m_data[neighborIndex] - myheight;
-					if (differenceToPositiveX > slopeDifference)
-					{
-						auto movedSoil = 0.1 * (differenceToPositiveX - slopeDifference);
-						newData[myindex] += movedSoil;
-						newData[neighborIndex] -= movedSoil;
-					}
-				};
-				
-				auto neighborPositiveX = index(cx(x + 1), y);
-				auto neighborNegativeX = index(cx(x - 1), y);
-				auto neighborPositiveY = index(x, cy(y + 1));
-				auto neighborNegativeY = index(x, cy(y - 1));
-				
-				auto differenceToPositiveX = m_data[neighborPositiveX] - myheight;
-				auto differenceToNegativeX = m_data[neighborNegativeX] - myheight;
-				auto differenceToPositiveY = m_data[neighborPositiveY] - myheight;
-				auto differenceToNegativeY = m_data[neighborNegativeY] - myheight;
-				
-				auto tallestNeighbor = neighborPositiveX;
-				if (neighborNegativeX > tallestNeighbor)
-					tallestNeighbor = neighborNegativeX;
-				if (neighborPositiveY > tallestNeighbor)
-					tallestNeighbor = neighborPositiveY;
-				if (neighborNegativeY > tallestNeighbor)
-					tallestNeighbor = neighborNegativeY;
-
-				erodeNeighbor(tallestNeighbor);
-				
-			}
-		m_data = newData;
-	}
-
 private:
 	std::vector<float> m_data;
 	int m_width;
