@@ -7,21 +7,20 @@ in vec2 fTexCoord;
 
 out vec4 FragColor;
 
-uniform sampler2D WaterMapDepth;
-uniform sampler2D WaterMapNormals;
-uniform mat4 WaterMapProjectionMatrix;
-uniform mat4 WaterMapViewMatrix;
-uniform vec3 LightPosition;
+layout(location = 4) uniform mat4 WaterMapProjectionMatrix;
+layout(location = 5) uniform mat4 WaterMapViewMatrix;
+layout(location = 6) uniform vec3 LightPosition;
+layout(location = 7) uniform float GrassTextureScale;
+layout(location = 8) uniform float SandTextureScale;
+layout(location = 9) uniform float Time;
 
-uniform sampler2D GrassTexture;
-uniform float GrassTextureScale;
-uniform sampler2D SandTexture;
-uniform float SandTextureScale;
-uniform float Time;
-
-uniform sampler2D NoiseNormalTexture;
-uniform sampler2D CausticTexture;
-uniform sampler1D SubSurfaceScatteringTexture;
+layout(binding = 0) uniform sampler2D WaterMapDepth;
+layout(binding = 1) uniform sampler2D WaterMapNormals;
+layout(binding = 2) uniform sampler2D GrassTexture;
+layout(binding = 3) uniform sampler2D SandTexture;
+layout(binding = 4) uniform sampler2D NoiseNormalTexture;
+layout(binding = 5) uniform sampler2D CausticTexture;
+layout(binding = 6) uniform sampler1D SubSurfaceScatteringTexture;
 
 float inverseDepthRangeTransformation(float depth)
 {

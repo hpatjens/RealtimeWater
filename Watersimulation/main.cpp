@@ -60,7 +60,22 @@ using Mat2 = glm::mat2;
 using Mat3 = glm::mat3;
 using Mat4 = glm::mat4;
 
-const auto IDENTITY = Mat4(1.0f);
+const auto IDENTITY4 = Mat4(1.0f);
+const auto IDENTITY3 = Mat3(1.0f);
+
+Mat3 makeMat3(const Mat4 m) {	
+	auto mptr = glm::value_ptr(m);
+	float a[] {
+		mptr[0], mptr[1], mptr[2],
+		mptr[4], mptr[5], mptr[6],
+		mptr[8], mptr[9], mptr[10]
+	};
+	return glm::make_mat3(a);
+}
+
+Mat3 makeNormalMatrix(const Mat4& worldMatrix) {
+	return makeMat3(glm::transpose(glm::inverse(worldMatrix)));
+}
 
 struct Attributes {
 	enum {
@@ -323,6 +338,49 @@ struct CombineProgram : public Program {
 	void waterDepthTexture(GLuint id) { glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, id); }
 };
 
+struct GroundProgram : public Program {
+	struct Uniforms {
+		enum {
+			WorldMatrix = 0,
+			ViewMatrix = 1,
+			ProjectionMatrix = 2,
+			NormalMatrix = 3,
+			WaterMapProjectionMatrix = 4,
+			WaterMapViewMatrix = 5,
+			LightPosition = 6,
+			GrassTextureScale = 7,
+			SandTextureScale = 8,
+			Time = 9,
+		};
+	};
+
+	void initialize() {
+		id = createProgram({
+			std::make_tuple("content/Watersimulation/ground.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/Watersimulation/ground.frag", GL_FRAGMENT_SHADER) 
+		});
+	}
+
+	void worldMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WorldMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void viewMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ViewMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void projectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void normalMatrix(const Mat3& m) { glUniformMatrix3fv(Uniforms::NormalMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void waterMapProjectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WaterMapProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void waterMapViewMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WaterMapViewMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void lightPosition(const Vec3& v) { glUniform3f(Uniforms::LightPosition, v.x, v.y, v.z); }
+	void grassTextureScale(float f) { glUniform1f(Uniforms::GrassTextureScale, f); }
+	void sandTextureScale(float f) { glUniform1f(Uniforms::SandTextureScale, f); }
+	void time(float f) { glUniform1f(Uniforms::Time, f); }
+
+	void waterMapDepth(GLuint id) { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, id); }
+	void waterMapNormals(GLuint id) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, id); }
+	void grassTexture(GLuint id) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, id); }
+	void sandTexture(GLuint id) { glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, id); }
+	void noiseNormalTexture(GLuint id) { glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, id); }
+	void causticTexture(GLuint id) { glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, id); }
+	void subSurfaceScatteringTexture(GLuint id) { glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_1D, id); }
+};
+
 struct {
 	GLFWwindow* window;
 
@@ -354,10 +412,12 @@ struct {
 
 	WaterProgram waterProgram;
 	CombineProgram combineProgram;
+	GroundProgram groundProgram;
 
 	void initialize() {
 		waterProgram.initialize();
 		combineProgram.initialize();
+		groundProgram.initialize();
 	}
 
 	Vec3 lightPos;
@@ -750,9 +810,9 @@ ProgramData createSimpleWaterProgram()
 	glUseProgram(programData.id);
 
 	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat4{ 1.0f }));
 
 	glUseProgram(0);
@@ -764,34 +824,6 @@ ProgramData createGroundProgram()
 {
 	ProgramData programData;
 
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/ground.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/ground.frag", GL_FRAGMENT_SHADER) });
-
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat4{ 1.0f }));
-	addUniform("LightPosition");
-	addUniform("WaterMapDepth");
-	addUniform("WaterMapNormals");
-	addUniform("WaterMapProjectionMatrix");
-	addUniform("WaterMapViewMatrix");
-	addUniform("GrassTexture");
-	addUniform("GrassTextureScale");
-	addUniform("SandTexture");
-	addUniform("SandTextureScale");
-	addUniform("NoiseNormalTexture");
-	addUniform("CausticTexture");
-	addUniform("SubSurfaceScatteringTexture");
-	addUniform("Time");
-
-	glUseProgram(0);
 
 	return programData;
 }
@@ -809,9 +841,9 @@ ProgramData createTextureProgram()
 	glUseProgram(programData.id);
 
 	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 	addUniform("Texture");
 
 	glUseProgram(0);
@@ -842,9 +874,9 @@ ProgramData createNormalsProgram()
 	glUseProgram(programData.id);
 
 	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat3{ 1.0f }));
 	addUniform("NormalLength");
 	addUniform("NormalColor");
@@ -867,10 +899,10 @@ ProgramData createSkyProgram()
 	glUseProgram(programData.id);
 
 	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("InverseViewProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(addUniform("InverseViewProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 	addUniform("SkyCubemap");
 
 	glUseProgram(0);
@@ -1012,21 +1044,10 @@ GLuint importTexture(const std::string& filename)
 	return id;
 }
 
-Mat3 from(const Mat4 m)
-{	
-	auto mptr = glm::value_ptr(m);
-	float a[]
-	{
-		mptr[0], mptr[1], mptr[2],
-		mptr[4], mptr[5], mptr[6],
-		mptr[8], mptr[9], mptr[10]
-	};
-	return glm::make_mat3(a);
-}
 
 void render(const float dt, const Mat4& projectionMatrix,
 	const Mesh& waterMesh, const Mesh& groundMesh, 
-	const ProgramData& simpleWaterProgram, const ProgramData& groundProgram, 
+	const ProgramData& simpleWaterProgram, 
 	const ProgramData& textureProgram, const ProgramData& combineProgram, 
 	const ProgramData& normalsProgram, const ProgramData& skyProgram)
 {
@@ -1050,10 +1071,10 @@ void render(const float dt, const Mat4& projectionMatrix,
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
-	auto waterWorldMatrix = glm::translate(glm::scale(IDENTITY, Vec3{ 2.0f }), Vec3{ -0.5f, 0, -0.5f });
-	auto waterNormalMatrix = from(glm::transpose(glm::inverse(waterWorldMatrix)));
-	auto groundWorldMatrix = glm::translate(glm::scale(IDENTITY, Vec3{ 2.0f }), Vec3{ -0.5f, 0, -0.5f });
-	auto groundNormalMatrix = from(glm::transpose(glm::inverse(groundWorldMatrix)));
+	auto waterWorldMatrix = glm::translate(glm::scale(IDENTITY4, Vec3{ 2.0f }), Vec3{ -0.5f, 0, -0.5f });
+	auto waterNormalMatrix = makeMat3(glm::transpose(glm::inverse(waterWorldMatrix)));
+	auto groundWorldMatrix = glm::translate(glm::scale(IDENTITY4, Vec3{ 2.0f }), Vec3{ -0.5f, 0, -0.5f });
+	auto groundNormalMatrix = makeMat3(glm::transpose(glm::inverse(groundWorldMatrix)));
 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -1086,7 +1107,7 @@ void render(const float dt, const Mat4& projectionMatrix,
 	glUseProgram(simpleWaterProgram.id);
 	{
 		glViewport(0, 0, appData.topViewSize.x, appData.topViewSize.y);
-		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topViewMatrix));
 		glUniformMatrix4fv(simpleWaterProgram.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topProjectionMatrix));
 		groundMesh.render();
@@ -1105,7 +1126,7 @@ void render(const float dt, const Mat4& projectionMatrix,
 	glUseProgram(skyProgram.id);
 	{
 		auto inverseViewProjectionMatrix = glm::inverse(projectionMatrix * viewMatrix);
-		glUniformMatrix4fv(skyProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+		glUniformMatrix4fv(skyProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 		glUniformMatrix4fv(skyProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 		glUniformMatrix4fv(skyProgram.uniforms.at("InverseViewProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(inverseViewProjectionMatrix));
 		
@@ -1117,51 +1138,30 @@ void render(const float dt, const Mat4& projectionMatrix,
 		renderUnitQuad();
 		glEnable(GL_DEPTH_TEST);
 	}
-	glUseProgram(groundProgram.id);
+	Program::use(appData.groundProgram);
 	{
-		glUniformMatrix4fv(groundProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(groundWorldMatrix));
-		glUniformMatrix4fv(groundProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-		glUniformMatrix4fv(groundProgram.uniforms.at("WaterMapProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightProjectionMatrix));
-		glUniformMatrix4fv(groundProgram.uniforms.at("WaterMapViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightViewMatrix));
-		glUniform3f(groundProgram.uniforms.at("LightPosition"), appData.lightPos.x, appData.lightPos.y, appData.lightPos.z);
-		glUniform1f(groundProgram.uniforms.at("Time"), time);
+		appData.groundProgram.worldMatrix(groundWorldMatrix);
+		appData.groundProgram.viewMatrix(viewMatrix);
+		appData.groundProgram.projectionMatrix(projectionMatrix);
+		appData.groundProgram.normalMatrix(IDENTITY3);
+		appData.groundProgram.waterMapProjectionMatrix(appData.lightProjectionMatrix);
+		appData.groundProgram.waterMapViewMatrix(appData.lightViewMatrix);
+		appData.groundProgram.lightPosition(appData.lightPos);
+		appData.groundProgram.grassTextureScale(24.0f);
+		appData.groundProgram.sandTextureScale(36.0f);
+		appData.groundProgram.time(time);
 		
+		appData.groundProgram.waterMapDepth(appData.waterMapFramebuffer.depthTexture);
+		appData.groundProgram.waterMapNormals(appData.waterMapFramebuffer.colorTexture);
+		appData.groundProgram.grassTexture(appData.grassTexture);
+		appData.groundProgram.sandTexture(appData.sandTexture);
+		appData.groundProgram.noiseNormalTexture(appData.noiseNormalTexture);
+		appData.groundProgram.causticTexture(appData.causticTexture);
+		appData.groundProgram.subSurfaceScatteringTexture(appData.subsurfaceScatteringTexture);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, appData.waterMapFramebuffer.depthTexture);
-		glUniform1i(groundProgram.uniforms.at("WaterMapDepth"), 0);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, appData.waterMapFramebuffer.colorTexture);
-		glUniform1i(groundProgram.uniforms.at("WaterMapNormals"), 1);
-
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, appData.grassTexture);
-		glUniform1i(groundProgram.uniforms.at("GrassTexture"), 2);
-		glUniform1f(groundProgram.uniforms.at("GrassTextureScale"), 24.0f);
-
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, appData.sandTexture);
-		glUniform1i(groundProgram.uniforms.at("SandTexture"), 3);
-		glUniform1f(groundProgram.uniforms.at("SandTextureScale"), 36.0f);
-
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, appData.noiseNormalTexture);
-		glUniform1i(groundProgram.uniforms.at("NoiseNormalTexture"), 4);
-
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, appData.causticTexture);
-		glUniform1i(groundProgram.uniforms.at("CausticTexture"), 5);
-
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_1D, appData.subsurfaceScatteringTexture);
-		glUniform1i(groundProgram.uniforms.at("SubSurfaceScatteringTexture"), 6);
-
-		glActiveTexture(GL_TEXTURE0);
-		
 		groundMesh.render();
 	}
-	glUseProgram(0);
+	Program::unuse();
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	
 	//
@@ -1203,7 +1203,7 @@ void render(const float dt, const Mat4& projectionMatrix,
 
 
 	//
-	//	combine Framebuffer
+	// Combine Framebuffer
 	//
 	Program::use(appData.combineProgram);
 	{
@@ -1411,7 +1411,7 @@ int main(int argc, char* argv[]) {
 	appData.framebufferSize = Vec2{ framebufferWidth, framebufferHeight };
 
 	// camera
-	appData.camera = IDENTITY;
+	appData.camera = IDENTITY4;
 	appData.topViewMatrix = glm::lookAt(Vec3{ 0.5f, 0.5f, 0.5f }, Vec3{ 0.5f, 0.0f, 0.5f }, Vec3{ 1, 0, 0 });
 	appData.topProjectionMatrix = glm::ortho(-0.5, 0.5, -0.5, 0.5);
 
@@ -1442,9 +1442,9 @@ int main(int argc, char* argv[]) {
 	glUseProgram(0);
 	auto textureProgramData = createTextureProgram();
 	glUseProgram(textureProgramData.id);
-	glUniformMatrix4fv(textureProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(textureProgramData.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(textureProgramData.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+	glUniformMatrix4fv(textureProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(textureProgramData.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
+	glUniformMatrix4fv(textureProgramData.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
 	glUseProgram(0);
 
 	glUseProgram(appData.waterProgram.id);
@@ -1455,10 +1455,6 @@ int main(int argc, char* argv[]) {
 	glUseProgram(simpleWaterProgramData.id);
 	glUniformMatrix4fv(simpleWaterProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightProjectionMatrix));
 	glUniformMatrix4fv(simpleWaterProgramData.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightViewMatrix));
-	glUseProgram(0);
-	auto groundProgramData = createGroundProgram();
-	glUseProgram(groundProgramData.id);
-	glUniformMatrix4fv(groundProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.projectionMatrix));
 	glUseProgram(0);
 	auto skyProgramData = createSkyProgram();
 	glUseProgram(skyProgramData.id);
@@ -1513,7 +1509,7 @@ int main(int argc, char* argv[]) {
 		simulateWater(waterMesh, groundMesh, waterSimulationProgram, timeDelta, time);
 
 		// render the scene
-		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh, simpleWaterProgramData, groundProgramData, textureProgramData, combineProgramData, normalsProgramData, skyProgramData);
+		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh, simpleWaterProgramData, textureProgramData, combineProgramData, normalsProgramData, skyProgramData);
 
 		waterMesh.swapBuffer();
 
