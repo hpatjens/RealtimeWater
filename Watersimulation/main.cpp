@@ -552,7 +552,7 @@ std::vector<Vertex> createMeshVertices(unsigned dimension, std::function<float(V
 		for0(y, dimension + 1) {
 			const auto NORMAL_EPSILON = cellSize / 10.0f;
 
-			auto normalizedPosition = Vec2{ x * cellSize, y * cellSize }; // [0,1]
+			auto normalizedPosition = Vec2{ x / float(dimension), y / float(dimension) }; // [0,1]
 			auto epsilonPositionX = normalizedPosition + Vec2{ NORMAL_EPSILON, 0 };
 			auto epsilonPositionY = normalizedPosition + Vec2{ 0, NORMAL_EPSILON };
 
@@ -594,60 +594,30 @@ std::vector<GLuint> createMeshIndices(unsigned dimension) {
 	return indices;
 }
 
-class Terrain {
-public:
-	Terrain(int width, int height, std::function<float(Vec2)> heightFunction)
-		: m_width{ width }, m_height{height }
-	{
-		m_data.resize(width * height);
-
-		for0(x, width) {
-			for0(y, height) {
-				m_data[index(x, y)] = heightFunction(Vec2(x / float(m_width), y / float(m_height)));
-			}
-		}
-	}
-
-	int getWidth() const { return m_width; }
-	int getHeight() const { return m_height; }
-	float getData(int x, int y) const { return m_data[index(x, y)]; }
-
-private:
-	std::vector<float> m_data;
-	int m_width;
-	int m_height;
-
-	int index(int x, int y) const { return y*m_width + x; }
-};
-
 class Mesh {
 public:
-	Mesh(const Terrain& terrain)
-		: m_dimension{ terrain.getWidth() }
+	Mesh(int size, const std::function<float(Vec2)> heightFunction) 
+		: m_size(size)
 	{
-		unsigned dimension = terrain.getWidth();
+		auto vertices = createMeshVertices(size, heightFunction);
+		auto indices = createMeshIndices(size);
 
-		auto vertices = createMeshVertices(dimension, [](Vec2 v){ return 0; });
-		auto indices = createMeshIndices(dimension);
+		auto vertexCount = (size + 1) * (size + 1);
+		m_indexCount = size * size * 6;
 
-		auto vertexCount = (dimension + 1) * (dimension + 1);
-		m_indexCount = dimension * dimension * 6;
-
-		auto c = [&](int v){ return std::min<int>(v, dimension - 1); };
-
-		for0(i, vertices.size()) {
-			auto x = i % (dimension + 1);
-			auto y = i / (dimension + 1);
-			vertices[i].position.y = terrain.getData(c(x), c(y));
-		}			
+		//for0(i, vertices.size()) {
+		//	auto x = i % (size + 1);
+		//	auto y = i / (size + 1);
+		//	vertices[i].position.y = heightFunction(Vec2(x / float(size), y / float(size)));
+		//}			
 
 		for0(i, vertices.size()) {
-			auto x = i % (dimension + 1);
-			auto y = i / (dimension + 1);
-			auto index = [&](int x, int y){ return y*(dimension + 1) + x; };
-			auto toPositiveX = vertices[index(std::min<int>(x + 1, dimension), y)].position - vertices[i].position;
-			auto toPositiveY = vertices[index(x, std::min<int>(y + 1, dimension))].position - vertices[i].position;
-			vertices[i].normal = x < dimension && y < dimension ? glm::normalize(glm::cross(toPositiveX, toPositiveY)) : Vec3{ 0, 1, 0 };
+			auto x = i % (size + 1);
+			auto y = i / (size + 1);
+			auto index = [&](int x, int y){ return y*(size + 1) + x; };
+			auto toPositiveX = vertices[index(std::min<int>(x + 1, size), y)].position - vertices[i].position;
+			auto toPositiveY = vertices[index(x, std::min<int>(y + 1, size))].position - vertices[i].position;
+			vertices[i].normal = x < size && y < size ? glm::normalize(glm::cross(toPositiveX, toPositiveY)) : Vec3{ 0, 1, 0 };
 		}
 
 		std::vector<Vec4> positionData;
@@ -664,54 +634,6 @@ public:
 		for0(i, vertices.size()) {
 			texCoordData.push_back(vertices[i].texCoord);
 		}
-
-		// Position Buffer
-		glGenBuffers(2, m_positionBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
-		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		// Normal Buffer
-		glGenBuffers(1, &m_normalBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, normalData.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		// TexCoord Buffer
-		glGenBuffers(1, &m_texCoordBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2) * vertexCount, texCoordData.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		// Element Buffer
-		glGenBuffers(1, &m_elementArrayBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)* m_indexCount, indices.data(), GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-
-	Mesh(int dimension, std::function<float(Vec2)> heightFunction)
-		: m_dimension{ dimension }
-	{
-		auto vertices = createMeshVertices(dimension, heightFunction);
-		auto indices = createMeshIndices(dimension);
-
-		auto vertexCount = (dimension + 1) * (dimension + 1);
-		m_indexCount = dimension * dimension * 6;
-
-		std::vector<Vec4> positionData;
-		for0(i, vertices.size())
-			positionData.push_back(Vec4{ vertices[i].position, 0.0 });
-
-		std::vector<Vec4> normalData;
-		for0(i, vertices.size())
-			normalData.push_back(Vec4{ vertices[i].normal, 0.0f });
-
-		std::vector<Vec2> texCoordData;
-		for0(i, vertices.size())
-			texCoordData.push_back(vertices[i].texCoord);
 
 		// Position Buffer
 		glGenBuffers(2, m_positionBuffer);
@@ -767,7 +689,7 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	int dimension() const { return m_dimension; }
+	int dimension() const { return m_size; }
 
 	GLuint positionBuffer1() const { return m_positionBuffer[0]; }
 	GLuint positionBuffer2() const { return m_positionBuffer[1]; }
@@ -775,7 +697,7 @@ public:
 	void swapBuffer() { std::swap(m_positionBuffer[0], m_positionBuffer[1]); }
 
 private:
-	int m_dimension;
+	int m_size;
 	GLuint m_positionBuffer[2];
 	GLuint m_normalBuffer;
 	GLuint m_texCoordBuffer;
@@ -1124,14 +1046,21 @@ void render(const float dt, const Mat4& projectionMatrix, const Mesh& waterMesh,
 			appData.groundProgram.waterMapProjectionMatrix(appData.lightProjectionMatrix);
 			appData.groundProgram.waterMapViewMatrix(appData.lightViewMatrix);
 			appData.groundProgram.lightPosition(appData.lightPos);
-			appData.groundProgram.grassTextureScale(24.0f);
-			appData.groundProgram.sandTextureScale(36.0f);
 			appData.groundProgram.time(time);
 		
 			appData.groundProgram.waterMapDepth(appData.waterMapFramebuffer.depthTexture);
 			appData.groundProgram.waterMapNormals(appData.waterMapFramebuffer.colorTexture);
+#if DEBUG_TEXTURE || 1
+			appData.groundProgram.grassTexture(appData.debugTexture1);
+			appData.groundProgram.sandTexture(appData.debugTexture1);
+			appData.groundProgram.grassTextureScale(24.0f);
+			appData.groundProgram.sandTextureScale(24.0f);
+#else
 			appData.groundProgram.grassTexture(appData.grassTexture);
 			appData.groundProgram.sandTexture(appData.sandTexture);
+			appData.groundProgram.grassTextureScale(24.0f);
+			appData.groundProgram.sandTextureScale(36.0f);
+#endif
 			appData.groundProgram.noiseNormalTexture(appData.noiseNormalTexture);
 			appData.groundProgram.causticTexture(appData.causticTexture);
 			appData.groundProgram.subSurfaceScatteringTexture(appData.subsurfaceScatteringTexture);
@@ -1385,7 +1314,7 @@ int main(int argc, char* argv[]) {
 	appData.lightViewMatrix = glm::lookAt(appData.lightPos, Vec3{ 0 }, Vec3{ 0, 1, 0 });
 
 	// textures
-	appData.debugTexture1 = createDebugTexture(512, 512);
+	appData.debugTexture1 = importTexture("content/Watersimulation/debugTexture1.png");
 	appData.grassTexture = importTexture("content/Watersimulation/grassTexture.jpg");
 	appData.sandTexture = importTexture("content/Watersimulation/sandTexture.jpg");
 	appData.noiseTexture = importTexture("content/Watersimulation/noiseTexture.png");
@@ -1420,8 +1349,7 @@ int main(int argc, char* argv[]) {
 
 		return static_cast<float>(HEIGHT * (0.1 + EFUNCTION_WEIGHT * efunction + NOISE_WEIGHT * glm::simplex(coordinate * NOISE_STRETCH)));
 	};
-	Terrain terrain(terrainSize, terrainSize, groundHeightFunction);
-	Mesh groundMesh(terrain);
+	Mesh groundMesh(terrainSize, groundHeightFunction);
 
 	Mesh waterMesh(terrainSize, [](Vec2 coordinate) { return 0; });
 
