@@ -53,6 +53,13 @@
 
 const auto IDENTITY = glm::mat4(1.0f);
 
+using Vec2 = glm::vec2;
+using Vec3 = glm::vec3;
+using Vec4 = glm::vec4;
+using Mat2 = glm::mat2;
+using Mat3 = glm::mat3;
+using Mat4 = glm::mat4;
+
 struct Attributes {
 	enum {
 		Position = 0,
@@ -171,6 +178,125 @@ struct FramebufferData {
 	GLuint id;
 };
 
+struct ProgramData {
+	GLuint id;
+	std::map<std::string, GLint> uniforms;
+};
+
+
+std::string loadFile(const std::string& filename)
+{
+	std::ifstream t(filename);
+	std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+	return str;
+}
+
+void checkShaderLog(GLuint shaderId)
+{
+	GLint length;
+	glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
+
+	if (length > 1)
+	{
+		std::vector<GLchar> logBuffer;
+		logBuffer.resize(length);
+		glGetShaderInfoLog(shaderId, length, &length, logBuffer.data());
+
+		quit("Shaderlog: %s\n", logBuffer.data());
+	}
+}
+
+void checkProgramLog(GLuint programId)
+{
+	GLint length;
+	glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &length);
+
+	if (length > 1)
+	{
+		std::vector<GLchar> logBuffer;
+		logBuffer.resize(length);
+		glGetProgramInfoLog(programId, length, &length, logBuffer.data());
+
+		quit("Programlog: %s\n", logBuffer.data());
+	}
+}
+
+GLuint createProgram(std::set<std::tuple<std::string, GLenum>> shaderConfiguration)
+{
+	auto programId = glCreateProgram();
+
+	std::vector<GLuint> shaders;
+
+	for (auto& shader : shaderConfiguration)
+	{
+		auto shaderFileName = std::get<0>(shader);
+		auto shaderType = std::get<1>(shader);
+		
+		auto shaderSource = loadFile(shaderFileName);
+		const char * shaderSourcePtr = shaderSource.c_str();
+
+		auto shaderId = glCreateShader(shaderType);
+		shaders.push_back(shaderId);
+
+		glShaderSource(shaderId, 1, &shaderSourcePtr, nullptr);
+		glCompileShader(shaderId);
+		checkShaderLog(shaderId);
+
+		glAttachShader(programId, shaderId);
+	}
+
+	glLinkProgram(programId);
+	checkProgramLog(programId);
+
+	for (auto& shader : shaders)
+		glDeleteShader(shader);
+
+	return programId;
+}
+
+struct WaterSimulationProgram {
+	void initialize() {
+		id = createProgram({
+			std::make_tuple("content/Watersimulation/water.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/Watersimulation/water.frag", GL_FRAGMENT_SHADER) 
+		});
+
+		auto addUniform = [&](const std::string& name){ return uniforms[name] = glGetUniformLocation(id, name.c_str()); };
+
+		glUseProgram(id);
+
+		// Uniforms
+		glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+		glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+		glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
+		glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4{1.0f}));
+		addUniform("WaterSurface");
+		addUniform("BackgroundColorTexture");
+		addUniform("BackgroundDepthTexture");
+		addUniform("FramebufferSize");
+		addUniform("NoiseTexture");
+		addUniform("NoiseNormalTexture");
+		addUniform("SkyCubemap");
+		addUniform("DeltaTime");
+		addUniform("Time");
+		addUniform("SubSurfaceScatteringTexture");
+		addUniform("FoamTexture");
+		addUniform("TopViewDepthTexture");
+		addUniform("TopViewMatrix");
+		addUniform("TopProjectionMatrix");
+
+		glUseProgram(0);
+	}
+
+	void projectionMatrix(const glm::mat4& m) { glUniformMatrix4fv(uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void worldMatrix(const glm::mat4& m) { glUniformMatrix4fv(uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void viewMatrix(const glm::mat4& m) { glUniformMatrix4fv(uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void normalMatrix(const glm::mat3& m) { glUniformMatrix3fv(uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+
+	GLuint id;
+	std::map<std::string, GLint> uniforms;	
+};
+
 struct {
 	GLFWwindow* window;
 
@@ -200,6 +326,12 @@ struct {
 
 	GLuint skyCubemap;
 
+	WaterSimulationProgram waterSimulationProgram;
+
+	void initialize() {
+		waterSimulationProgram.initialize();
+	}
+
 	glm::vec3 lightPos;
 	glm::mat4 lightProjectionMatrix;
 	glm::mat4 lightViewMatrix;
@@ -209,11 +341,6 @@ struct {
 	bool rightMouseButtonPressed;
 	bool moveDirection[Direction::DirectionCount];
 } appData;
-
-struct ProgramData {
-	GLuint id;
-	std::map<std::string, GLint> uniforms;
-};
 
 std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<float(glm::vec2)> heightFunction)
 {
@@ -466,75 +593,6 @@ struct perPixelLinkedLists
 	unsigned framebufferHeight;
 };
 
-std::string loadFile(const std::string& filename)
-{
-	std::ifstream t(filename);
-	std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-	return str;
-}
-
-void checkShaderLog(GLuint shaderId)
-{
-	GLint length;
-	glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
-
-	if (length > 1)
-	{
-		std::vector<GLchar> logBuffer;
-		logBuffer.resize(length);
-		glGetShaderInfoLog(shaderId, length, &length, logBuffer.data());
-
-		quit("Shaderlog: %s\n", logBuffer.data());
-	}
-}
-
-void checkProgramLog(GLuint programId)
-{
-	GLint length;
-	glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &length);
-
-	if (length > 1)
-	{
-		std::vector<GLchar> logBuffer;
-		logBuffer.resize(length);
-		glGetProgramInfoLog(programId, length, &length, logBuffer.data());
-
-		quit("Programlog: %s\n", logBuffer.data());
-	}
-}
-
-GLuint createProgram(std::set<std::tuple<std::string, GLenum>> shaderConfiguration)
-{
-	auto programId = glCreateProgram();
-
-	std::vector<GLuint> shaders;
-
-	for (auto& shader : shaderConfiguration)
-	{
-		auto shaderFileName = std::get<0>(shader);
-		auto shaderType = std::get<1>(shader);
-		
-		auto shaderSource = loadFile(shaderFileName);
-		const char * shaderSourcePtr = shaderSource.c_str();
-
-		auto shaderId = glCreateShader(shaderType);
-		shaders.push_back(shaderId);
-
-		glShaderSource(shaderId, 1, &shaderSourcePtr, nullptr);
-		glCompileShader(shaderId);
-		checkShaderLog(shaderId);
-
-		glAttachShader(programId, shaderId);
-	}
-
-	glLinkProgram(programId);
-	checkProgramLog(programId);
-
-	for (auto& shader : shaders)
-		glDeleteShader(shader);
-
-	return programId;
-}
 
 FramebufferData createGeneralFramebuffer(const unsigned width, const unsigned height)
 {
@@ -638,44 +696,16 @@ GLFWwindow* createContext() {
 		appData.framebufferSize = glm::vec2{ width, height };
 	});
 
+	if (GLEW_ARB_debug_output) {
+		glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+			if (type == GL_DEBUG_TYPE_ERROR_ARB) {
+				quit("GLEW_ARB_debug_output: %s\n", message);
+			}
+		}, nullptr);
+		glEnable(GL_DEBUG_OUTPUT);
+	}
+
 	return window;
-}
-
-ProgramData createWaterProgram()
-{
-	ProgramData programData;
-
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/water.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/water.frag", GL_FRAGMENT_SHADER) });
-
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4{1.0f}));
-	addUniform("WaterSurface");
-	addUniform("BackgroundColorTexture");
-	addUniform("BackgroundDepthTexture");
-	addUniform("FramebufferSize");
-	addUniform("NoiseTexture");
-	addUniform("NoiseNormalTexture");
-	addUniform("SkyCubemap");
-	addUniform("DeltaTime");
-	addUniform("Time");
-	addUniform("SubSurfaceScatteringTexture");
-	addUniform("FoamTexture");
-	addUniform("TopViewDepthTexture");
-	addUniform("TopViewMatrix");
-	addUniform("TopProjectionMatrix");
-
-	glUseProgram(0);
-
-	return programData;
 }
 
 ProgramData createSimpleWaterProgram()
@@ -980,7 +1010,7 @@ glm::mat3 from(const glm::mat4 m)
 }
 
 void render(const float deltaTime, const glm::mat4& projectionMatrix,
-	const Mesh& waterMesh, const Mesh& groundMesh, const ProgramData& waterProgram, 
+	const Mesh& waterMesh, const Mesh& groundMesh, 
 	const ProgramData& simpleWaterProgram, const ProgramData& groundProgram, 
 	const ProgramData& textureProgram, const ProgramData& combineProgram, 
 	const ProgramData& normalsProgram, const ProgramData& skyProgram)
@@ -1126,48 +1156,48 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClearDepth(1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glUseProgram(waterProgram.id);
+	glUseProgram(appData.waterSimulationProgram.id);
 	{	
-		glUniform2f(waterProgram.uniforms.at("FramebufferSize"), appData.framebufferSize.x, appData.framebufferSize.y);
-		glUniformMatrix4fv(waterProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(waterWorldMatrix));
-		glUniformMatrix3fv(waterProgram.uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(waterNormalMatrix));
-		glUniformMatrix4fv(waterProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-		glUniformMatrix4fv(waterProgram.uniforms.at("TopViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topViewMatrix));
-		glUniformMatrix4fv(waterProgram.uniforms.at("TopProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topProjectionMatrix));
+		glUniform2f(appData.waterSimulationProgram.uniforms.at("FramebufferSize"), appData.framebufferSize.x, appData.framebufferSize.y);
+		appData.waterSimulationProgram.worldMatrix(waterWorldMatrix);
+		appData.waterSimulationProgram.normalMatrix(waterNormalMatrix);
+		appData.waterSimulationProgram.viewMatrix(viewMatrix);
+		glUniformMatrix4fv(appData.waterSimulationProgram.uniforms.at("TopViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topViewMatrix));
+		glUniformMatrix4fv(appData.waterSimulationProgram.uniforms.at("TopProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.topProjectionMatrix));
 
-		glUniform1f(waterProgram.uniforms.at("DeltaTime"), deltaTime);
-		glUniform1f(waterProgram.uniforms.at("Time"), (float)glfwGetTime());		
+		glUniform1f(appData.waterSimulationProgram.uniforms.at("DeltaTime"), deltaTime);
+		glUniform1f(appData.waterSimulationProgram.uniforms.at("Time"), (float)glfwGetTime());		
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, appData.backgroundFramebuffer.colorTexture);
-		glUniform1i(waterProgram.uniforms.at("BackgroundColorTexture"), 0);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("BackgroundColorTexture"), 0);
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, appData.backgroundFramebuffer.depthTexture);
-		glUniform1i(waterProgram.uniforms.at("BackgroundDepthTexture"), 1);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("BackgroundDepthTexture"), 1);
 
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, appData.noiseTexture);
-		glUniform1i(waterProgram.uniforms.at("NoiseTexture"), 2);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("NoiseTexture"), 2);
 
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, appData.noiseNormalTexture);
-		glUniform1i(waterProgram.uniforms.at("NoiseNormalTexture"), 3);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("NoiseNormalTexture"), 3);
 
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, appData.skyCubemap);
-		glUniform1i(waterProgram.uniforms.at("SkyCubemap"), 4);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("SkyCubemap"), 4);
 
 		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_1D, appData.subsurfaceScatteringTexture);
-		glUniform1i(waterProgram.uniforms.at("SubSurfaceScatteringTexture"), 5);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("SubSurfaceScatteringTexture"), 5);
 
 		glActiveTexture(GL_TEXTURE6);
 		// Empty
 
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, appData.topFramebuffer.depthTexture);
-		glUniform1i(waterProgram.uniforms.at("TopViewDepthTexture"), 7);
+		glUniform1i(appData.waterSimulationProgram.uniforms.at("TopViewDepthTexture"), 7);
 
 		glActiveTexture(GL_TEXTURE0);
 
@@ -1385,16 +1415,9 @@ void simulateWater(const Mesh& waterMesh, const Mesh& terrain, const ProgramData
 int main(int argc, char* argv[]) {
 	appData.window = createContext();
 
-	initialize();
+	appData.initialize();
 
-	if (GLEW_ARB_debug_output) {
-		glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-			if (type == GL_DEBUG_TYPE_ERROR_ARB) {
-				quit("GLEW_ARB_debug_output: %s\n", message);
-			}
-		}, nullptr);
-		glEnable(GL_DEBUG_OUTPUT);
-	}
+	initialize();
 
 	int framebufferWidth, framebufferHeight;
 	glfwGetFramebufferSize(appData.window, &framebufferWidth, &framebufferHeight);
@@ -1437,10 +1460,11 @@ int main(int argc, char* argv[]) {
 	glUniformMatrix4fv(textureProgramData.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(textureProgramData.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUseProgram(0);
-	auto waterProgramData = createWaterProgram();
-	glUseProgram(waterProgramData.id);
-	glUniformMatrix4fv(waterProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.projectionMatrix));
+
+	glUseProgram(appData.waterSimulationProgram.id);
+	appData.waterSimulationProgram.projectionMatrix(appData.projectionMatrix);	
 	glUseProgram(0);
+
 	auto simpleWaterProgramData = createSimpleWaterProgram();
 	glUseProgram(simpleWaterProgramData.id);
 	glUniformMatrix4fv(simpleWaterProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightProjectionMatrix));
@@ -1466,14 +1490,13 @@ int main(int argc, char* argv[]) {
 
 	int terrainSize = 200;
 
-	auto groundHeightFunction = [](glm::vec2 coordinate)
-	{
-		const auto COORDINATE_STRETCH = 5.0f;
-		const auto EFUNCTION_STRETCH = 10.0f;
-		const auto EFUNCTION_WEIGHT = -0.7f;
-		const auto NOISE_WEIGHT = 0.015;
-		const auto NOISE_STRETCH = 6.0f;
-		const auto HEIGHT = 0.6f;
+	auto groundHeightFunction = [](glm::vec2 coordinate) {
+		float COORDINATE_STRETCH = 5.0f;
+		float EFUNCTION_STRETCH = 10.0f;
+		float EFUNCTION_WEIGHT = -0.7f;
+		float NOISE_WEIGHT = 0.015;
+		float NOISE_STRETCH = 6.0f;
+		float HEIGHT = 0.6f;
 
 		auto correctedCoordinate = (glm::vec2{ 1.0 } - coordinate) * COORDINATE_STRETCH - glm::vec2{ 0.0f };
 		auto efunction = (1.0f / sqrt(2.0f * M_PI)) * exp(-(1.0f / EFUNCTION_STRETCH) * correctedCoordinate.x * correctedCoordinate.x);
@@ -1493,8 +1516,7 @@ int main(int argc, char* argv[]) {
 
 	float lastFrameTime = 0;
 	
-	while (!glfwWindowShouldClose(appData.window))
-	{
+	while (!glfwWindowShouldClose(appData.window)) {
 		glfwSetWindowTitle(appData.window, std::to_string(fpsCounter.frame()).c_str());
 
 		update();
@@ -1505,7 +1527,7 @@ int main(int argc, char* argv[]) {
 		simulateWater(waterMesh, groundMesh, waterSimulationProgram, timeDelta, time);
 
 		// render the scene
-		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh, waterProgramData, simpleWaterProgramData, groundProgramData, textureProgramData, combineProgramData, normalsProgramData, skyProgramData);
+		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh, simpleWaterProgramData, groundProgramData, textureProgramData, combineProgramData, normalsProgramData, skyProgramData);
 
 		waterMesh.swapBuffer();
 
