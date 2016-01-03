@@ -51,14 +51,16 @@
 #define breakdefault break; default
 #define intern static
 
-const auto IDENTITY = glm::mat4(1.0f);
 
 using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;
+using Vec2i = glm::ivec2;
 using Mat2 = glm::mat2;
 using Mat3 = glm::mat3;
 using Mat4 = glm::mat4;
+
+const auto IDENTITY = Mat4(1.0f);
 
 struct Attributes {
 	enum {
@@ -77,9 +79,9 @@ struct Geometry {
 intern Geometry c_unitQuad;
 
 struct Vertex {
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec2 texCoord;
+	Vec3 position;
+	Vec3 normal;
+	Vec2 texCoord;
 };
 
 void setAttribPointer(GLuint vertexArrayObject, GLuint location, GLuint buffer, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLuint offset) {
@@ -146,7 +148,7 @@ void quit(const char *format, ...) {
 	va_end(arg);
 
 #if defined(_DEBUG) && defined(_MSC_VER)
-	__debugbreak;
+	__debugbreak();
 #endif
 
 	exit(Errors::Fatal);
@@ -269,7 +271,7 @@ struct WaterSimulationProgram {
 		glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 		glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 		glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-		glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4{1.0f}));
+		glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat4{1.0f}));
 		addUniform("WaterSurface");
 		addUniform("BackgroundColorTexture");
 		addUniform("BackgroundDepthTexture");
@@ -288,10 +290,10 @@ struct WaterSimulationProgram {
 		glUseProgram(0);
 	}
 
-	void projectionMatrix(const glm::mat4& m) { glUniformMatrix4fv(uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
-	void worldMatrix(const glm::mat4& m) { glUniformMatrix4fv(uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
-	void viewMatrix(const glm::mat4& m) { glUniformMatrix4fv(uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
-	void normalMatrix(const glm::mat3& m) { glUniformMatrix3fv(uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void projectionMatrix(const Mat4& m) { glUniformMatrix4fv(uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void worldMatrix(const Mat4& m) { glUniformMatrix4fv(uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void viewMatrix(const Mat4& m) { glUniformMatrix4fv(uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
+	void normalMatrix(const Mat3& m) { glUniformMatrix3fv(uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(m)); }
 
 	GLuint id;
 	std::map<std::string, GLint> uniforms;	
@@ -310,11 +312,11 @@ struct {
 	FramebufferData topFramebuffer;
 	glm::ivec2 topViewSize;
 	glm::ivec2 waterMapSize;
-	glm::mat4 topViewMatrix;
-	glm::mat4 topProjectionMatrix;
-	glm::mat4 projectionMatrix;
+	Mat4 topViewMatrix;
+	Mat4 topProjectionMatrix;
+	Mat4 projectionMatrix;
 
-	glm::vec2 framebufferSize;
+	Vec2 framebufferSize;
 
 	GLuint debugTexture1;
 	GLuint grassTexture;
@@ -332,17 +334,17 @@ struct {
 		waterSimulationProgram.initialize();
 	}
 
-	glm::vec3 lightPos;
-	glm::mat4 lightProjectionMatrix;
-	glm::mat4 lightViewMatrix;
+	Vec3 lightPos;
+	Mat4 lightProjectionMatrix;
+	Mat4 lightViewMatrix;
 
-	glm::mat4 camera;
-	glm::vec2 mousePosition;
+	Mat4 camera;
+	Vec2 mousePosition;
 	bool rightMouseButtonPressed;
 	bool moveDirection[Direction::DirectionCount];
 } appData;
 
-std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<float(glm::vec2)> heightFunction)
+std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<float(Vec2)> heightFunction)
 {
 	std::vector<Vertex> vertices;
 	auto cellSize = 1.0f / dimension;
@@ -351,18 +353,18 @@ std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<f
 		{
 			const auto NORMAL_EPSILON = cellSize / 10.0f;
 
-			auto normalizedPosition = glm::vec2{ x * cellSize, y * cellSize }; // [0,1]
-			auto epsilonPositionX = normalizedPosition + glm::vec2{ NORMAL_EPSILON, 0 };
-			auto epsilonPositionY = normalizedPosition + glm::vec2{ 0, NORMAL_EPSILON };
+			auto normalizedPosition = Vec2{ x * cellSize, y * cellSize }; // [0,1]
+			auto epsilonPositionX = normalizedPosition + Vec2{ NORMAL_EPSILON, 0 };
+			auto epsilonPositionY = normalizedPosition + Vec2{ 0, NORMAL_EPSILON };
 
 			auto currentHeight = heightFunction(normalizedPosition);
 			auto epsilonHeightX = heightFunction(epsilonPositionX);
 			auto epsilonHeightY = heightFunction(epsilonPositionY);
 			
-			auto position = glm::vec3{ normalizedPosition.x, currentHeight, normalizedPosition.y };
+			auto position = Vec3{ normalizedPosition.x, currentHeight, normalizedPosition.y };
 
-			auto toEpsilonX = glm::vec3{ epsilonPositionX.x, epsilonHeightX, epsilonPositionX.y } - position;
-			auto toEpsilonY = glm::vec3{ epsilonPositionY.x, epsilonHeightY, epsilonPositionY.y } -position;
+			auto toEpsilonX = Vec3{ epsilonPositionX.x, epsilonHeightX, epsilonPositionX.y } - position;
+			auto toEpsilonY = Vec3{ epsilonPositionY.x, epsilonHeightY, epsilonPositionY.y } -position;
 
 			auto normal = glm::normalize(glm::cross(toEpsilonY, toEpsilonX));
 
@@ -396,7 +398,7 @@ std::vector<GLuint> createMeshIndices(const unsigned dimension)
 class Terrain
 {
 public:
-	Terrain(int width, int height, std::function<float(glm::vec2)> heightFunction)
+	Terrain(int width, int height, std::function<float(Vec2)> heightFunction)
 		: m_width{ width }, m_height{height }
 	{
 		m_data.resize(width * height);
@@ -404,7 +406,7 @@ public:
 		// initialize with height function
 		for0(x, width)
 			for0(y, height)
-				m_data[index(x, y)] = heightFunction(glm::vec2{ x / (float) m_width, y / (float) m_height });
+				m_data[index(x, y)] = heightFunction(Vec2{ x / (float) m_width, y / (float) m_height });
 	}
 
 	int width() const { return m_width; }
@@ -425,9 +427,9 @@ public:
 	Mesh(const Terrain& terrain)
 		: m_dimension{ terrain.width() }
 	{
-		auto dimension = terrain.width();
+		unsigned dimension = terrain.width();
 
-		auto vertices = createMeshVertices(dimension, [](glm::vec2 v){ return 0; });
+		auto vertices = createMeshVertices(dimension, [](Vec2 v){ return 0; });
 		auto indices = createMeshIndices(dimension);
 
 		auto vertexCount = (dimension + 1) * (dimension + 1);
@@ -449,39 +451,39 @@ public:
 			auto index = [&](int x, int y){ return y*(dimension + 1) + x; };
 			auto toPositiveX = vertices[index(std::min<int>(x + 1, dimension), y)].position - vertices[i].position;
 			auto toPositiveY = vertices[index(x, std::min<int>(y + 1, dimension))].position - vertices[i].position;
-			vertices[i].normal = x < dimension && y < dimension ? glm::normalize(glm::cross(toPositiveX, toPositiveY)) : glm::vec3{ 0, 1, 0 };
+			vertices[i].normal = x < dimension && y < dimension ? glm::normalize(glm::cross(toPositiveX, toPositiveY)) : Vec3{ 0, 1, 0 };
 		}
 
-		std::vector<glm::vec4> positionData;
+		std::vector<Vec4> positionData;
 		for0(i, vertices.size())
-			positionData.push_back(glm::vec4{ vertices[i].position, 0.0 });
+			positionData.push_back(Vec4{ vertices[i].position, 0.0 });
 
-		std::vector<glm::vec4> normalData;
+		std::vector<Vec4> normalData;
 		for0(i, vertices.size())
-			normalData.push_back(glm::vec4{ vertices[i].normal, 0.0 });
+			normalData.push_back(Vec4{ vertices[i].normal, 0.0 });
 
-		std::vector<glm::vec2> texCoordData;
+		std::vector<Vec2> texCoordData;
 		for0(i, vertices.size())
 			texCoordData.push_back(vertices[i].texCoord);
 
 		// Position Buffer
 		glGenBuffers(2, m_positionBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
 		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// Normal Buffer
 		glGenBuffers(1, &m_normalBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * vertexCount, normalData.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, normalData.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// TexCoord Buffer
 		glGenBuffers(1, &m_texCoordBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * vertexCount, texCoordData.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2) * vertexCount, texCoordData.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// Element Buffer
@@ -491,7 +493,7 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	Mesh(int dimension, std::function<float(glm::vec2)> heightFunction)
+	Mesh(int dimension, std::function<float(Vec2)> heightFunction)
 		: m_dimension{ dimension }
 	{
 		auto vertices = createMeshVertices(dimension, heightFunction);
@@ -500,36 +502,36 @@ public:
 		auto vertexCount = (dimension + 1) * (dimension + 1);
 		m_indexCount = dimension * dimension * 6;
 
-		std::vector<glm::vec4> positionData;
+		std::vector<Vec4> positionData;
 		for0(i, vertices.size())
-			positionData.push_back(glm::vec4{ vertices[i].position, 0.0 });
+			positionData.push_back(Vec4{ vertices[i].position, 0.0 });
 
-		std::vector<glm::vec4> normalData;
+		std::vector<Vec4> normalData;
 		for0(i, vertices.size())
-			normalData.push_back(glm::vec4{ vertices[i].normal, 0.0f });
+			normalData.push_back(Vec4{ vertices[i].normal, 0.0f });
 
-		std::vector<glm::vec2> texCoordData;
+		std::vector<Vec2> texCoordData;
 		for0(i, vertices.size())
 			texCoordData.push_back(vertices[i].texCoord);
 
 		// Position Buffer
 		glGenBuffers(2, m_positionBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
 		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, positionData.data(), GL_DYNAMIC_COPY);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// Normal Buffer
 		glGenBuffers(1, &m_normalBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * vertexCount, normalData.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec4) * vertexCount, normalData.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// TexCoord Buffer
 		glGenBuffers(1, &m_texCoordBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * vertexCount, texCoordData.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vec2) * vertexCount, texCoordData.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// Element Buffer
@@ -543,15 +545,15 @@ public:
 	{		
 		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
 		glEnableVertexAttribArray(Attributes::Position);
-		glVertexAttribPointer(Attributes::Position, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), nullptr);
+		glVertexAttribPointer(Attributes::Position, 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), nullptr);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
 		glEnableVertexAttribArray(Attributes::Normal);
-		glVertexAttribPointer(Attributes::Normal, 3, GL_FLOAT, GL_TRUE, sizeof(glm::vec4), reinterpret_cast<void*>(sizeof(glm::vec4)));
+		glVertexAttribPointer(Attributes::Normal, 3, GL_FLOAT, GL_TRUE, sizeof(Vec4), reinterpret_cast<void*>(sizeof(Vec4)));
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
 		glEnableVertexAttribArray(Attributes::TexCoord);
-		glVertexAttribPointer(Attributes::TexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), reinterpret_cast<void*>(sizeof(glm::vec4) * 2));
+		glVertexAttribPointer(Attributes::TexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), reinterpret_cast<void*>(sizeof(Vec4) * 2));
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
 
@@ -682,7 +684,7 @@ GLFWwindow* createContext() {
 	});
 
 	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double x, double y) { 
-		appData.mousePosition = glm::vec2{ x, y };	
+		appData.mousePosition = Vec2{ x, y };	
 	});
 
 	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
@@ -693,7 +695,7 @@ GLFWwindow* createContext() {
 		glDeleteFramebuffers(1, &appData.waterFramebuffer.id);
 		appData.waterFramebuffer = createGeneralFramebuffer(width, height);
 
-		appData.framebufferSize = glm::vec2{ width, height };
+		appData.framebufferSize = Vec2{ width, height };
 	});
 
 	if (GLEW_ARB_debug_output) {
@@ -724,7 +726,7 @@ ProgramData createSimpleWaterProgram()
 	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4{ 1.0f }));
+	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat4{ 1.0f }));
 
 	glUseProgram(0);
 
@@ -747,7 +749,7 @@ ProgramData createGroundProgram()
 	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat4{ 1.0f }));
+	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat4{ 1.0f }));
 	addUniform("LightPosition");
 	addUniform("WaterMapDepth");
 	addUniform("WaterMapNormals");
@@ -830,7 +832,7 @@ ProgramData createNormalsProgram()
 	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
 	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(glm::mat3{ 1.0f }));
+	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat3{ 1.0f }));
 	addUniform("NormalLength");
 	addUniform("NormalColor");
 
@@ -997,7 +999,7 @@ GLuint importTexture(const std::string& filename)
 	return id;
 }
 
-glm::mat3 from(const glm::mat4 m)
+Mat3 from(const Mat4 m)
 {	
 	auto mptr = glm::value_ptr(m);
 	float a[]
@@ -1009,7 +1011,7 @@ glm::mat3 from(const glm::mat4 m)
 	return glm::make_mat3(a);
 }
 
-void render(const float deltaTime, const glm::mat4& projectionMatrix,
+void render(const float deltaTime, const Mat4& projectionMatrix,
 	const Mesh& waterMesh, const Mesh& groundMesh, 
 	const ProgramData& simpleWaterProgram, const ProgramData& groundProgram, 
 	const ProgramData& textureProgram, const ProgramData& combineProgram, 
@@ -1021,11 +1023,11 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 	auto x = cos(time) * CAMERA_DISTANCE;
 	auto z = sin(time) * CAMERA_DISTANCE;
 
-	glm::mat4 viewMatrix;
+	Mat4 viewMatrix;
 	if (appData.manualCamera)
 		viewMatrix = glm::inverse(appData.camera);
 	else
-		viewMatrix = glm::lookAt(glm::vec3(x, 0.2f, z), glm::vec3(0, -0.2f, 0), glm::vec3(0, 1, 0));
+		viewMatrix = glm::lookAt(Vec3(x, 0.2f, z), Vec3(0, -0.2f, 0), Vec3(0, 1, 0));
 	
 	if (appData.wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1035,9 +1037,9 @@ void render(const float deltaTime, const glm::mat4& projectionMatrix,
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
-	auto waterWorldMatrix = glm::translate(glm::scale(IDENTITY, glm::vec3{ 2.0f }), glm::vec3{ -0.5f, 0, -0.5f });
+	auto waterWorldMatrix = glm::translate(glm::scale(IDENTITY, Vec3{ 2.0f }), Vec3{ -0.5f, 0, -0.5f });
 	auto waterNormalMatrix = from(glm::transpose(glm::inverse(waterWorldMatrix)));
-	auto groundWorldMatrix = glm::translate(glm::scale(IDENTITY, glm::vec3{ 2.0f }), glm::vec3{ -0.5f, 0, -0.5f });
+	auto groundWorldMatrix = glm::translate(glm::scale(IDENTITY, Vec3{ 2.0f }), Vec3{ -0.5f, 0, -0.5f });
 	auto groundNormalMatrix = from(glm::transpose(glm::inverse(groundWorldMatrix)));
 
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -1357,29 +1359,29 @@ GLuint createCubemap()
 void update() {
 	float cameraSpeed = 0.01f;
 
-	if (appData.moveDirection[Direction::Front]) appData.camera = glm::translate(appData.camera, glm::vec3{ 0, 0, -1 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Back])  appData.camera = glm::translate(appData.camera, glm::vec3{ 0, 0, +1 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Right]) appData.camera = glm::translate(appData.camera, glm::vec3{ +1, 0, 0 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Left])  appData.camera = glm::translate(appData.camera, glm::vec3{ -1, 0, 0 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Up])	 appData.camera = glm::translate(appData.camera, glm::vec3{ 0, +1, 0 } * cameraSpeed);
-	if (appData.moveDirection[Direction::Down])  appData.camera = glm::translate(appData.camera, glm::vec3{ 0, -1, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Front]) appData.camera = glm::translate(appData.camera, Vec3{ 0, 0, -1 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Back])  appData.camera = glm::translate(appData.camera, Vec3{ 0, 0, +1 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Right]) appData.camera = glm::translate(appData.camera, Vec3{ +1, 0, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Left])  appData.camera = glm::translate(appData.camera, Vec3{ -1, 0, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Up])	 appData.camera = glm::translate(appData.camera, Vec3{ 0, +1, 0 } * cameraSpeed);
+	if (appData.moveDirection[Direction::Down])  appData.camera = glm::translate(appData.camera, Vec3{ 0, -1, 0 } * cameraSpeed);
 
 	if (appData.manualCamera)
 	{
-		auto middle = glm::vec2{ appData.framebufferSize.x / 2.0f, appData.framebufferSize.y / 2.0f };
+		auto middle = Vec2{ appData.framebufferSize.x / 2.0f, appData.framebufferSize.y / 2.0f };
 		auto offset = middle - appData.mousePosition;
 
 		const auto rotationSpeed = 0.0001f;
 
 		if (appData.rightMouseButtonPressed)
 		{
-			auto toVec3 = [](glm::vec4 v){ return glm::vec3{ v.x / v.w, v.y / v.w, v.z / v.w }; };
+			auto toVec3 = [](Vec4 v){ return Vec3{ v.x / v.w, v.y / v.w, v.z / v.w }; };
 
 			auto normalMatrix = glm::transpose(glm::inverse(appData.camera));
-			auto yAxisInWorld = glm::inverse(normalMatrix) * glm::vec4{ 0, 1, 0, 1 };
+			auto yAxisInWorld = glm::inverse(normalMatrix) * Vec4{ 0, 1, 0, 1 };
 			auto yAxisInWorldWDiv = toVec3(yAxisInWorld);
 			
-			auto xAxis = glm::vec3{ 1, 0, 0 };
+			auto xAxis = Vec3{ 1, 0, 0 };
 
 			appData.camera = glm::rotate(appData.camera, float(offset.y * rotationSpeed), xAxis);
 			appData.camera = glm::rotate(appData.camera, float(offset.x * rotationSpeed), yAxisInWorldWDiv);
@@ -1422,17 +1424,17 @@ int main(int argc, char* argv[]) {
 	int framebufferWidth, framebufferHeight;
 	glfwGetFramebufferSize(appData.window, &framebufferWidth, &framebufferHeight);
 	appData.projectionMatrix = glm::perspectiveFov(45.0f, float(framebufferWidth), float(framebufferHeight), 0.001f, 100.0f);
-	appData.framebufferSize = glm::vec2{ framebufferWidth, framebufferHeight };
+	appData.framebufferSize = Vec2{ framebufferWidth, framebufferHeight };
 
 	// camera
 	appData.camera = IDENTITY;
-	appData.topViewMatrix = glm::lookAt(glm::vec3{ 0.5f, 0.5f, 0.5f }, glm::vec3{ 0.5f, 0.0f, 0.5f }, glm::vec3{ 1, 0, 0 });
+	appData.topViewMatrix = glm::lookAt(Vec3{ 0.5f, 0.5f, 0.5f }, Vec3{ 0.5f, 0.0f, 0.5f }, Vec3{ 1, 0, 0 });
 	appData.topProjectionMatrix = glm::ortho(-0.5, 0.5, -0.5, 0.5);
 
 	// set up light
-	appData.lightPos = glm::vec3{ -1, 1, -1 };
+	appData.lightPos = Vec3{ -1, 1, -1 };
 	appData.lightProjectionMatrix = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.01f, 5.0f);
-	appData.lightViewMatrix = glm::lookAt(appData.lightPos, glm::vec3{ 0 }, glm::vec3{ 0, 1, 0 });
+	appData.lightViewMatrix = glm::lookAt(appData.lightPos, Vec3{ 0 }, Vec3{ 0, 1, 0 });
 
 	// textures
 	appData.debugTexture1 = createDebugTexture(512, 512);
@@ -1490,15 +1492,15 @@ int main(int argc, char* argv[]) {
 
 	int terrainSize = 200;
 
-	auto groundHeightFunction = [](glm::vec2 coordinate) {
+	auto groundHeightFunction = [](Vec2 coordinate) {
 		float COORDINATE_STRETCH = 5.0f;
 		float EFUNCTION_STRETCH = 10.0f;
 		float EFUNCTION_WEIGHT = -0.7f;
-		float NOISE_WEIGHT = 0.015;
+		float NOISE_WEIGHT = 0.015f;
 		float NOISE_STRETCH = 6.0f;
 		float HEIGHT = 0.6f;
 
-		auto correctedCoordinate = (glm::vec2{ 1.0 } - coordinate) * COORDINATE_STRETCH - glm::vec2{ 0.0f };
+		auto correctedCoordinate = (Vec2{ 1.0 } - coordinate) * COORDINATE_STRETCH - Vec2{ 0.0f };
 		auto efunction = (1.0f / sqrt(2.0f * M_PI)) * exp(-(1.0f / EFUNCTION_STRETCH) * correctedCoordinate.x * correctedCoordinate.x);
 
 		return static_cast<float>(HEIGHT * (0.1 + EFUNCTION_WEIGHT * efunction + NOISE_WEIGHT * glm::simplex(coordinate * NOISE_STRETCH)));
@@ -1506,7 +1508,7 @@ int main(int argc, char* argv[]) {
 	Terrain terrain(terrainSize, terrainSize, groundHeightFunction);
 	Mesh groundMesh(terrain);
 
-	Mesh waterMesh(terrainSize, [](glm::vec2 coordinate) { return 0; });
+	Mesh waterMesh(terrainSize, [](Vec2 coordinate) { return 0; });
 
 	FpsCounter fpsCounter;
 
