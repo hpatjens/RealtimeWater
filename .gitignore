@@ -1,3 +1,5 @@
-
-water2D/Debug/*
-water2D/water2D.vcxproj.user
+WaterSimulation.sdf
+WaterSimulation/Debug/*
+WaterSimulation/WaterSimulation/Debug/*
+WaterSimulation/water2D.vcxproj.user
+Watersimulation.opensdf

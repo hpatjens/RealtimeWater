@@ -1,4 +1,4 @@
-﻿Der Buildvorgang wurde am 03.01.2016 11:40:41 gestartet.
+﻿Der Buildvorgang wurde am 03.01.2016 11:44:06 gestartet.
      1>Projekt "G:\Daten\Softwareentwicklung\Local\Watersimulation\Watersimulation\Watersimulation.vcxproj" auf Knoten "2", Build Ziel(e).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
@@ -91,24 +91,9 @@
                  ]
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\Watersimulation.exe" /INCREMENTAL /NOLOGO /LIBPATH:G:\Daten\Softwareentwicklung\Local\Watersimulation\/libraries/corona/bin/win /LIBPATH:G:\Daten\Softwareentwicklung\Local\Watersimulation\/libraries/glew/bin/win /LIBPATH:G:\Daten\Softwareentwicklung\Local\Watersimulation\/libraries/glfw/bin/win opengl32.lib glfw3.lib glew32.lib corona.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\Watersimulation.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\Watersimulation.lib" /MACHINE:X86 Debug\main.obj
-     1>LINK : warning LNK4098: Standardbibliothek "LIBCMTD" steht in Konflikt mit anderen Bibliotheken; /NODEFAULTLIB:Bibliothek verwenden.
-     1>glfw3.lib(context.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(context.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(gamma.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(gamma.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(init.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(init.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(input.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(input.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(monitor.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(monitor.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(time.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(time.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(window.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(window.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(win32_gamma.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(win32_gamma.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(win32_init.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(win32_init.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(win32_joystick.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(win32_joystick.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(win32_monitor.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(win32_monitor.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(win32_time.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(win32_time.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(win32_window.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(win32_window.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
-     1>glfw3.lib(wgl_context.obj) : warning LNK4099: PDB "vc120.pdb" wurde nicht mit "glfw3.lib(wgl_context.obj)" oder an "G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\vc120.pdb" gefunden; Objekt wird verkn³pft, als ob keine Debuginformationen vorhanden wõren.
          Watersimulation.vcxproj -> G:\Daten\Softwareentwicklung\Local\Watersimulation\Debug\Watersimulation.exe
      1>Die Erstellung des Projekts "G:\Daten\Softwareentwicklung\Local\Watersimulation\Watersimulation\Watersimulation.vcxproj" ist abgeschlossen, Build Ziel(e).
 
 Build erfolgreich.
 
-Verstrichene Zeit 00:00:01.04
+Verstrichene Zeit 00:00:01.13
