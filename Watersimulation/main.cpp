@@ -603,14 +603,14 @@ public:
 
 		for0(x, width) {
 			for0(y, height) {
-				m_data[index(x, y)] = heightFunction(Vec2{ x / (float) m_width, y / (float) m_height });
+				m_data[index(x, y)] = heightFunction(Vec2(x / float(m_width), y / float(m_height)));
 			}
 		}
 	}
 
-	int width() const { return m_width; }
-	int height() const { return m_height; }
-	float data(int x, int y) const { return m_data[index(x, y)]; }
+	int getWidth() const { return m_width; }
+	int getHeight() const { return m_height; }
+	float getData(int x, int y) const { return m_data[index(x, y)]; }
 
 private:
 	std::vector<float> m_data;
@@ -623,9 +623,9 @@ private:
 class Mesh {
 public:
 	Mesh(const Terrain& terrain)
-		: m_dimension{ terrain.width() }
+		: m_dimension{ terrain.getWidth() }
 	{
-		unsigned dimension = terrain.width();
+		unsigned dimension = terrain.getWidth();
 
 		auto vertices = createMeshVertices(dimension, [](Vec2 v){ return 0; });
 		auto indices = createMeshIndices(dimension);
@@ -635,15 +635,13 @@ public:
 
 		auto c = [&](int v){ return std::min<int>(v, dimension - 1); };
 
-		for0(i, vertices.size())
-		{
+		for0(i, vertices.size()) {
 			auto x = i % (dimension + 1);
 			auto y = i / (dimension + 1);
-			vertices[i].position.y = terrain.data(c(x), c(y));
+			vertices[i].position.y = terrain.getData(c(x), c(y));
 		}			
 
-		for0(i, vertices.size())
-		{
+		for0(i, vertices.size()) {
 			auto x = i % (dimension + 1);
 			auto y = i / (dimension + 1);
 			auto index = [&](int x, int y){ return y*(dimension + 1) + x; };
@@ -653,16 +651,19 @@ public:
 		}
 
 		std::vector<Vec4> positionData;
-		for0(i, vertices.size())
+		for0(i, vertices.size()) {
 			positionData.push_back(Vec4{ vertices[i].position, 0.0 });
+		}
 
 		std::vector<Vec4> normalData;
-		for0(i, vertices.size())
+		for0(i, vertices.size()) {
 			normalData.push_back(Vec4{ vertices[i].normal, 0.0 });
+		}
 
 		std::vector<Vec2> texCoordData;
-		for0(i, vertices.size())
+		for0(i, vertices.size()) {
 			texCoordData.push_back(vertices[i].texCoord);
+		}
 
 		// Position Buffer
 		glGenBuffers(2, m_positionBuffer);
@@ -782,17 +783,6 @@ private:
 	GLuint m_vertexArrayObject;
 	unsigned m_indexCount;
 };
-
-struct perPixelLinkedLists
-{
-	GLuint headPointerTexture;
-	GLuint clearHeadPointerBuffer;
-	GLuint fragmentStorageAtomicCounter;
-	GLuint fragmentStorageTexture;
-	unsigned framebufferWidth;
-	unsigned framebufferHeight;
-};
-
 
 FramebufferData createGeneralFramebuffer(const unsigned width, const unsigned height)
 {
