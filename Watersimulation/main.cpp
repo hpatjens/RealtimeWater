@@ -51,7 +51,6 @@
 #define breakdefault break; default
 #define intern static
 
-
 using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;
@@ -200,21 +199,17 @@ struct ProgramData {
 	std::map<std::string, GLint> uniforms;
 };
 
-
-std::string loadFile(const std::string& filename)
-{
+std::string loadFile(const std::string& filename) {
 	std::ifstream t(filename);
 	std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 	return str;
 }
 
-void checkShaderLog(GLuint shaderId)
-{
+void checkShaderLog(GLuint shaderId) {
 	GLint length;
 	glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
 
-	if (length > 1)
-	{
+	if (length > 1) {
 		std::vector<GLchar> logBuffer;
 		logBuffer.resize(length);
 		glGetShaderInfoLog(shaderId, length, &length, logBuffer.data());
@@ -223,13 +218,11 @@ void checkShaderLog(GLuint shaderId)
 	}
 }
 
-void checkProgramLog(GLuint programId)
-{
+void checkProgramLog(GLuint programId) {
 	GLint length;
 	glGetProgramiv(programId, GL_INFO_LOG_LENGTH, &length);
 
-	if (length > 1)
-	{
+	if (length > 1) {
 		std::vector<GLchar> logBuffer;
 		logBuffer.resize(length);
 		glGetProgramInfoLog(programId, length, &length, logBuffer.data());
@@ -238,14 +231,12 @@ void checkProgramLog(GLuint programId)
 	}
 }
 
-GLuint createProgram(std::set<std::tuple<std::string, GLenum>> shaderConfiguration)
-{
+GLuint createProgram(std::set<std::tuple<std::string, GLenum>> shaderConfiguration) {
 	auto programId = glCreateProgram();
 
 	std::vector<GLuint> shaders;
 
-	for (auto& shader : shaderConfiguration)
-	{
+	for (auto& shader : shaderConfiguration) {
 		auto shaderFileName = std::get<0>(shader);
 		auto shaderType = std::get<1>(shader);
 		
@@ -265,8 +256,9 @@ GLuint createProgram(std::set<std::tuple<std::string, GLenum>> shaderConfigurati
 	glLinkProgram(programId);
 	checkProgramLog(programId);
 
-	for (auto& shader : shaders)
+	for (auto& shader : shaders) {
 		glDeleteShader(shader);
+	}
 
 	return programId;
 }
@@ -450,7 +442,62 @@ struct TextureProgram : public Program {
 	void texture(GLuint id) { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, id); }
 };
 
+struct NormalsProgram : public Program {
+	struct Uniforms {
+		enum {
+			WorldMatrix = 0,
+			ViewMatrix = 1,
+			ProjectionMatrix = 2,
+			NormalMatrix = 3,
+			NormalLength = 4,
+			NormalColor = 5,
+		};
+	};
+
+	void initialize() {
+		id = createProgram({
+			std::make_tuple("content/Watersimulation/normals.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/Watersimulation/normals.geom", GL_GEOMETRY_SHADER),
+			std::make_tuple("content/Watersimulation/normals.frag", GL_FRAGMENT_SHADER) 
+		});
+	}
+
+	void worldMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WorldMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void viewMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ViewMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void projectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::ProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void normalMatrix(const Mat3& m) { glUniformMatrix3fv(Uniforms::NormalMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
+	void normalLength(float f) { glUniform1f(Uniforms::NormalLength, f); }
+	void normalColor(const Vec4& v) { glUniform4f(Uniforms::NormalColor, v.x, v.y, v.z, v.w); }
+};
+
+struct WaterSimulationProgram : public Program {
+	void initialize() {
+		id = createProgram({ std::make_tuple("content/Watersimulation/watersimulation.comp", GL_COMPUTE_SHADER) });
+	}
+
+	void dimension(int i) { glUniform1i(0, i); }
+	void deltaTime(float f) { glUniform1f(1, f); }
+	void time(float f) { glUniform1f(2, f); }
+	void noiseTexture(GLuint id) { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, id); }
+
+	void positionBuffer1(GLuint id) { glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, id); }
+	void positionBuffer2(GLuint id) { glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, id); }
+	void normalBuffer(GLuint id) { glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, id); }
+	void terrainPositionsBuffer(GLuint id) { glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, id); }
+};
+
 struct {
+	void initialize() {
+		waterProgram.initialize();
+		combineProgram.initialize();
+		groundProgram.initialize();
+		skyProgram.initialize();
+		simpleWaterProgram.initialize();
+		textureProgram.initialize();
+		normalsProgram.initialize();
+		waterSimulationProgram.initialize();
+	}
+
 	GLFWwindow* window;
 
 	bool wireframe;
@@ -485,15 +532,8 @@ struct {
 	SkyProgram skyProgram;
 	SimpleWaterProgram simpleWaterProgram;
 	TextureProgram textureProgram;
-
-	void initialize() {
-		waterProgram.initialize();
-		combineProgram.initialize();
-		groundProgram.initialize();
-		skyProgram.initialize();
-		simpleWaterProgram.initialize();
-		textureProgram.initialize();
-	}
+	NormalsProgram normalsProgram;
+	WaterSimulationProgram waterSimulationProgram;
 
 	Vec3 lightPos;
 	Mat4 lightProjectionMatrix;
@@ -505,13 +545,11 @@ struct {
 	bool moveDirection[Direction::DirectionCount];
 } appData;
 
-std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<float(Vec2)> heightFunction)
-{
+std::vector<Vertex> createMeshVertices(unsigned dimension, std::function<float(Vec2)> heightFunction) {
 	std::vector<Vertex> vertices;
 	auto cellSize = 1.0f / dimension;
-	for0(x, dimension + 1)
-		for0(y, dimension + 1)
-		{
+	for0(x, dimension + 1) {
+		for0(y, dimension + 1) {
 			const auto NORMAL_EPSILON = cellSize / 10.0f;
 
 			auto normalizedPosition = Vec2{ x * cellSize, y * cellSize }; // [0,1]
@@ -532,16 +570,15 @@ std::vector<Vertex> createMeshVertices(const unsigned dimension, std::function<f
 			auto texCoord = normalizedPosition;
 			vertices.push_back(Vertex{ position, normal, texCoord });
 		}
+	}
 	return vertices;
 }
 
-std::vector<GLuint> createMeshIndices(const unsigned dimension)
-{
+std::vector<GLuint> createMeshIndices(unsigned dimension) {
 	std::vector<GLuint> indices;
 	const GLuint verticesPerRow = dimension + 1;
-	for0(x, dimension)
-		for0(y, dimension)
-		{
+	for0(x, dimension) {
+		for0(y, dimension) {
 			// triangle 1
 			indices.push_back(y * verticesPerRow + x);
 			indices.push_back(y * verticesPerRow + (x + 1));
@@ -553,21 +590,22 @@ std::vector<GLuint> createMeshIndices(const unsigned dimension)
 			indices.push_back((y + 1) * verticesPerRow + x);
 
 		}
+	}
 	return indices;
 }
 
-class Terrain
-{
+class Terrain {
 public:
 	Terrain(int width, int height, std::function<float(Vec2)> heightFunction)
 		: m_width{ width }, m_height{height }
 	{
 		m_data.resize(width * height);
 
-		// initialize with height function
-		for0(x, width)
-			for0(y, height)
+		for0(x, width) {
+			for0(y, height) {
 				m_data[index(x, y)] = heightFunction(Vec2{ x / (float) m_width, y / (float) m_height });
+			}
+		}
 	}
 
 	int width() const { return m_width; }
@@ -582,8 +620,7 @@ private:
 	int index(int x, int y) const { return y*m_width + x; }
 };
 
-class Mesh
-{
+class Mesh {
 public:
 	Mesh(const Terrain& terrain)
 		: m_dimension{ terrain.width() }
@@ -872,175 +909,51 @@ GLFWwindow* createContext() {
 	return window;
 }
 
-ProgramData createSimpleWaterProgram()
-{
-	ProgramData programData;
-
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/simplewater.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/simplewater.frag", GL_FRAGMENT_SHADER) });
-
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat4{ 1.0f }));
-
-	glUseProgram(0);
-
-	return programData;
-}
-
-ProgramData createGroundProgram()
-{
-	ProgramData programData;
-
-
-	return programData;
-}
-
-ProgramData createTextureProgram()
-{
-	ProgramData programData;
-
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/texture.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/texture.frag", GL_FRAGMENT_SHADER) });
-
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	addUniform("Texture");
-
-	glUseProgram(0);
-
-	return programData;
-}
-
-ProgramData createCombineProgram()
-{
-	ProgramData programData;
-
-
-
-	return programData;
-}
-
-ProgramData createNormalsProgram()
-{
-	ProgramData programData;
-
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/normals.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/normals.geom", GL_GEOMETRY_SHADER),
-		std::make_tuple("content/Watersimulation/normals.frag", GL_FRAGMENT_SHADER) });
-
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix3fv(addUniform("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(Mat3{ 1.0f }));
-	addUniform("NormalLength");
-	addUniform("NormalColor");
-
-	glUseProgram(0);
-
-	return programData;
-}
-
-ProgramData createSkyProgram()
-{
-	ProgramData programData;
-
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/sky.vert", GL_VERTEX_SHADER),
-		std::make_tuple("content/Watersimulation/sky.frag", GL_FRAGMENT_SHADER) });
-
-	auto addUniform = [&](const std::string& name){ return programData.uniforms[name] = glGetUniformLocation(programData.id, name.c_str()); };
-
-	glUseProgram(programData.id);
-
-	// Uniforms
-	glUniformMatrix4fv(addUniform("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(addUniform("InverseViewProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	addUniform("SkyCubemap");
-
-	glUseProgram(0);
-
-	return programData;
-}
-
-ProgramData createWaterSimulationProgram()
-{
-	ProgramData programData;
-
-	programData.id = createProgram({
-		std::make_tuple("content/Watersimulation/watersimulation.comp", GL_COMPUTE_SHADER) });
-
-	return programData;
-}
-
-GLuint createSubsurfaceScatteringTexture()
-{
+GLuint createSubsurfaceScatteringTexture() {
 	GLuint id;
 	glGenTextures(1, &id);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_1D, id);
 
-	struct pixel  { GLubyte r, g, b; };
+	struct Pixel  { GLubyte r, g, b; };
 
 	const int size = 3;
-	std::vector<pixel> data;
-	data.push_back(pixel{ 2, 204, 147 });
-	data.push_back(pixel{ 2, 127, 199 });
-	data.push_back(pixel{ 1, 9, 100 });
+	Pixel data[3];
+	data[0] = Pixel{ 2, 204, 147 };
+	data[1] = Pixel{ 2, 127, 199 };
+	data[2] = Pixel{ 1, 9, 100 };
 
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 
-	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, size, 0, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, size, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
 	glBindTexture(GL_TEXTURE_1D, 0);
 
 	return id;
 }
 
-GLuint createDebugTexture(int width, int height, int cellSize = 32)
-{
+GLuint createDebugTexture(int width, int height, int cellSize = 32) {
 	GLuint id;
 	glGenTextures(1, &id);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, id);
 
-	struct pixel  { GLubyte r, g, b, a; };
+	struct Pixel  { GLubyte r, g, b, a; };
 
-	std::vector<pixel> data;
-	data.resize(sizeof(pixel) * width * height);
-	for0(x, width)
-		for0(y, height)
-			data[y*width + x] = pixel
-			{ 
+	std::vector<Pixel> data;
+	data.resize(sizeof(Pixel) * width * height);
+	for0(x, width) {
+		for0(y, height) {
+			data[y*width + x] = Pixel { 
 				GLubyte(((x / cellSize) + (y / cellSize)) % 2 == 0 ? 0xFF : 0x00),
 				GLubyte((((x / cellSize) + (y / cellSize)) % 2 == 1) && (y / cellSize) % 2 == 0 ? 0xFF : 0x00),
 				GLubyte((((x / cellSize) + (y / cellSize)) % 2 == 1) && (x / cellSize) % 2 == 0 ? 0xFF : 0x00),
 				GLubyte(1)
 			};
+		}
+	}		
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1054,31 +967,26 @@ GLuint createDebugTexture(int width, int height, int cellSize = 32)
 	return id;
 }
 
-corona::Image* importImage(const std::string& filename)
-{
-	auto getExtension = [&](){ return filename.substr(filename.find_last_of(".") + 1); };
+corona::Image* importImage(const std::string& filename) {
+	auto extension = filename.substr(filename.find_last_of(".") + 1);
+	std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-	auto getFormat = [&]()
-	{
-		auto extension = getExtension();
-		std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-
-		if (extension == "jpg" || extension == "jpeg")
-			return corona::FileFormat::FF_JPEG;
-		else if (extension == "bmp")
-			return corona::FileFormat::FF_BMP;
-		else if (extension == "gif")
-			return corona::FileFormat::FF_GIF;
-		else if (extension == "png")
-			return corona::FileFormat::FF_PNG;
-		else if (extension == "pcx")
-			return corona::FileFormat::FF_PCX;
-		else if (extension == "tga")
-			return corona::FileFormat::FF_TGA;
-		throw std::string{ "impossible" };
-	};
-
-	auto format = getFormat();
+	corona::FileFormat format;
+	if (extension == "jpg" || extension == "jpeg") {
+		format = corona::FileFormat::FF_JPEG;
+	} else if (extension == "bmp") {
+		format = corona::FileFormat::FF_BMP;
+	} else if (extension == "gif") {
+		format = corona::FileFormat::FF_GIF;
+	} else if (extension == "png") {
+		format = corona::FileFormat::FF_PNG;
+	} else if (extension == "pcx") {
+		format = corona::FileFormat::FF_PCX;
+	} else if (extension == "tga") {
+		format = corona::FileFormat::FF_TGA;
+	} else {
+		quit("Format of image %s is not supported.\n", filename.c_str());
+	}
 
 	auto imageOriginal = corona::OpenImage(filename.c_str(), format);
 	auto imageConverted = corona::ConvertImage(imageOriginal, corona::PixelFormat::PF_R8G8B8A8);
@@ -1086,8 +994,7 @@ corona::Image* importImage(const std::string& filename)
 	return imageConverted;
 }
 
-GLuint importTexture(const std::string& filename)
-{
+GLuint importTexture(const std::string& filename) {
 	auto imageConverted = importImage(filename);
 
 	auto dataPtr = static_cast<char*>(imageConverted->getPixels());
@@ -1112,7 +1019,7 @@ GLuint importTexture(const std::string& filename)
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dataPtr);
 
-	//glGenerateMipmap(GL_TEXTURE_2D); // <---- test this
+	glGenerateMipmap(GL_TEXTURE_2D); // <---- test this
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -1120,24 +1027,22 @@ GLuint importTexture(const std::string& filename)
 }
 
 
-void render(const float dt, const Mat4& projectionMatrix, const Mesh& waterMesh, const Mesh& groundMesh)
-{
-	const float CAMERA_DISTANCE = 0.8f;
+void render(const float dt, const Mat4& projectionMatrix, const Mesh& waterMesh, const Mesh& groundMesh) {
+	float CAMERA_DISTANCE = 0.8f;
 
 	float time = float(glfwGetTime()) * 0.2f;
 	auto x = cos(time) * CAMERA_DISTANCE;
 	auto z = sin(time) * CAMERA_DISTANCE;
 
-	Mat4 viewMatrix;
-	if (appData.manualCamera)
-		viewMatrix = glm::inverse(appData.camera);
-	else
-		viewMatrix = glm::lookAt(Vec3(x, 0.2f, z), Vec3(0, -0.2f, 0), Vec3(0, 1, 0));
+	Mat4 viewMatrix = appData.manualCamera ? 
+		glm::inverse(appData.camera) : 
+		glm::lookAt(Vec3(x, 0.2f, z), Vec3(0, -0.2f, 0), Vec3(0, 1, 0));
 	
-	if (appData.wireframe)
+	if (appData.wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
+	} else {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -1254,8 +1159,9 @@ void render(const float dt, const Mat4& projectionMatrix, const Mesh& waterMesh,
 	{	
 		appData.waterProgram.framebufferSize(appData.framebufferSize);
 		appData.waterProgram.worldMatrix(waterWorldMatrix);
-		appData.waterProgram.normalMatrix(waterNormalMatrix);
 		appData.waterProgram.viewMatrix(viewMatrix);
+		appData.waterProgram.projectionMatrix(projectionMatrix);
+		appData.waterProgram.normalMatrix(waterNormalMatrix);
 		appData.waterProgram.topViewMatrix(appData.topViewMatrix);
 		appData.waterProgram.topProjectionMatrix(appData.topProjectionMatrix);
 
@@ -1335,30 +1241,29 @@ void render(const float dt, const Mat4& projectionMatrix, const Mesh& waterMesh,
 		Program::unuse();
 	}
 
-	//if (appData.normals) {
-	//	glUseProgram(normalsProgram.id);
-	//	{
-	//		glUniformMatrix4fv(normalsProgram.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-	//
-	//		glUniformMatrix4fv(normalsProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(waterWorldMatrix));
-	//		glUniformMatrix3fv(normalsProgram.uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(waterNormalMatrix));
-	//		glUniform4f(normalsProgram.uniforms.at("NormalColor"), 0, 0, 1, 1);
-	//		waterMesh.render();
-	//
-	//		glUniformMatrix4fv(normalsProgram.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(groundWorldMatrix));
-	//		glUniformMatrix3fv(normalsProgram.uniforms.at("NormalMatrix"), 1, GL_FALSE, glm::value_ptr(groundNormalMatrix));
-	//		glUniform4f(normalsProgram.uniforms.at("NormalColor"), 0, 1, 0, 1);
-	//		groundMesh.render();
-	//	}
-	//	glUseProgram(0);
-	//}
+	if (appData.normals) {
+		Program::use(appData.normalsProgram);
+		{
+			appData.normalsProgram.worldMatrix(waterWorldMatrix);
+			appData.normalsProgram.viewMatrix(viewMatrix);
+			appData.normalsProgram.projectionMatrix(projectionMatrix);
+			appData.normalsProgram.normalColor(Vec4(0, 0, 1, 1));
+	
+			waterMesh.render();
+	
+			appData.normalsProgram.worldMatrix(groundWorldMatrix);
+			appData.normalsProgram.normalMatrix(groundNormalMatrix);
+			appData.normalsProgram.normalColor(Vec4(0, 1, 0, 1));
+
+			groundMesh.render();
+		}
+		Program::unuse();
+	}
 }
 
-class FpsCounter
-{
+class FpsCounter {
 public:
-	int frame()
-	{
+	int frame() {
 		double currentTime = glfwGetTime();
 		m_frames++;
 		if (currentTime - m_lastTime >= 1.0)
@@ -1376,8 +1281,7 @@ private:
 	double m_lastTime = glfwGetTime();
 };
 
-GLuint createCubemap()
-{
+GLuint createCubemap() {
 	GLuint id;
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
@@ -1448,23 +1352,22 @@ void update() {
 	}
 }
 
-void simulateWater(const Mesh& waterMesh, const Mesh& terrain, const ProgramData& waterSimulationProgram, const float deltaTime, const float time)
-{
-	glUseProgram(waterSimulationProgram.id);
+void simulateWater(const Mesh& waterMesh, const Mesh& terrain, float dt, float time) {
+	glUseProgram(appData.waterSimulationProgram.id);
 
-	auto vertexDimension = waterMesh.dimension() + 1;
+	auto dimension = waterMesh.dimension() + 1;
 
-	glUniform1i(0, vertexDimension);
-	glBindMultiTextureEXT(GL_TEXTURE0, GL_TEXTURE_2D, appData.noiseTexture);
-	glUniform1i(1, 0);
-	glUniform1f(2, deltaTime);
-	glUniform1f(3, time);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, waterMesh.positionBuffer1());
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, waterMesh.positionBuffer2());
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, waterMesh.normalBuffer());
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, terrain.positionBuffer1());
+	appData.waterSimulationProgram.dimension(dimension);
+	appData.waterSimulationProgram.deltaTime(dt);
+	appData.waterSimulationProgram.time(time);
+	appData.waterSimulationProgram.noiseTexture(appData.noiseTexture);
 
-	glDispatchCompute(vertexDimension, vertexDimension, 1);
+	appData.waterSimulationProgram.positionBuffer1(waterMesh.positionBuffer1());
+	appData.waterSimulationProgram.positionBuffer2(waterMesh.positionBuffer2());
+	appData.waterSimulationProgram.normalBuffer(waterMesh.normalBuffer());
+	appData.waterSimulationProgram.terrainPositionsBuffer(terrain.positionBuffer1());
+
+	glDispatchCompute(dimension, dimension, 1);
 
 	glUseProgram(0);
 }
@@ -1502,35 +1405,6 @@ int main(int argc, char* argv[]) {
 
 	// cubemap
 	appData.skyCubemap = createCubemap();
-
-	// create shader programs
-	auto waterSimulationProgram = createWaterSimulationProgram();
-	auto combineProgramData = createCombineProgram();
-	auto normalsProgramData = createNormalsProgram();
-	glUseProgram(normalsProgramData.id);
-	glUniformMatrix4fv(normalsProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.projectionMatrix));
-	glUniform1f(normalsProgramData.uniforms.at("NormalLength"), 0.01f);	
-	glUseProgram(0);
-	auto textureProgramData = createTextureProgram();
-	glUseProgram(textureProgramData.id);
-	glUniformMatrix4fv(textureProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(textureProgramData.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUniformMatrix4fv(textureProgramData.uniforms.at("WorldMatrix"), 1, GL_FALSE, glm::value_ptr(IDENTITY4));
-	glUseProgram(0);
-
-	glUseProgram(appData.waterProgram.id);
-	appData.waterProgram.projectionMatrix(appData.projectionMatrix);	
-	glUseProgram(0);
-
-	auto simpleWaterProgramData = createSimpleWaterProgram();
-	glUseProgram(simpleWaterProgramData.id);
-	glUniformMatrix4fv(simpleWaterProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightProjectionMatrix));
-	glUniformMatrix4fv(simpleWaterProgramData.uniforms.at("ViewMatrix"), 1, GL_FALSE, glm::value_ptr(appData.lightViewMatrix));
-	glUseProgram(0);
-	auto skyProgramData = createSkyProgram();
-	glUseProgram(skyProgramData.id);
-	glUniformMatrix4fv(skyProgramData.uniforms.at("ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(appData.projectionMatrix));
-	glUseProgram(0);
 
 	appData.waterMapSize = glm::ivec2{ 1024 };
 	appData.topViewSize = glm::ivec2{ 1024 };
@@ -1577,7 +1451,7 @@ int main(int argc, char* argv[]) {
 		auto time = (float)glfwGetTime();
 		auto timeDelta = time - lastFrameTime;
 		lastFrameTime = time;
-		simulateWater(waterMesh, groundMesh, waterSimulationProgram, timeDelta, time);
+		simulateWater(waterMesh, groundMesh, timeDelta, time);
 
 		// render the scene
 		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh);

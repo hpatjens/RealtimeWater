@@ -6,12 +6,11 @@ layout (line_strip, max_vertices = 2) out;
 in vec4 gPosition[];
 in vec3 gNormal[];
 
-uniform mat4 ProjectionMatrix;
-uniform mat4 ViewMatrix;
-uniform mat4 WorldMatrix;
-uniform mat3 NormalMatrix;
-
-uniform float NormalLength;
+layout(location = 0) uniform mat4 WorldMatrix;
+layout(location = 1) uniform mat4 ViewMatrix;
+layout(location = 2) uniform mat4 ProjectionMatrix;
+layout(location = 3) uniform mat3 NormalMatrix;
+layout(location = 4) uniform float NormalLength;
 
 void main()
 {	
