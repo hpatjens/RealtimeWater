@@ -1,5 +1,11 @@
-WaterSimulation.sdf
-WaterSimulation/Debug/*
-WaterSimulation/WaterSimulation/Debug/*
-WaterSimulation/water2D.vcxproj.user
+Watersimulation.sdf
+Watersimulation/Debug
+Debug/Watersimulation.exe
+Debug/*
+!Debug/Watersimulation.exe
+!Debug/corona.dll
+!Debug/glew32.dll
+!Debug/content
+Watersimulation/Watersimulation/Debug/*
+Watersimulation/watersimulation.vcxproj.user
 Watersimulation.opensdf
