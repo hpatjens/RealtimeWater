@@ -117,30 +117,27 @@ void setAttribPointer(GLuint vertexArrayObject, GLuint location, GLuint buffer, 
 	glBindBuffer(GL_ARRAY_BUFFER, previousBuffer);
 }
 
-void initialize() {
-	// Unit Quad
-	{
-		Vertex unitQuadVertices[] {
-			{ { -1, -1, 0 }, { 0, 1, 0 }, { 0, 0 } },
-			{ {  1, -1, 0 }, { 0, 1, 0 }, { 1, 0 } },
-			{ {  1,  1, 0 }, { 0, 1, 0 }, { 1, 1 } },
+void initializeUnitQuad() {
+	Vertex unitQuadVertices[] {
+		{ { -1, -1, 0 }, { 0, 1, 0 }, { 0, 0 } },
+		{ {  1, -1, 0 }, { 0, 1, 0 }, { 1, 0 } },
+		{ {  1,  1, 0 }, { 0, 1, 0 }, { 1, 1 } },
 
-			{ { -1, -1, 0 }, { 0, 1, 0 }, { 0, 0 } },
-			{ {  1,  1, 0 }, { 0, 1, 0 }, { 1, 1 } },
-			{ { -1,  1, 0 }, { 0, 1, 0 }, { 0, 1 } },
-		};
+		{ { -1, -1, 0 }, { 0, 1, 0 }, { 0, 0 } },
+		{ {  1,  1, 0 }, { 0, 1, 0 }, { 1, 1 } },
+		{ { -1,  1, 0 }, { 0, 1, 0 }, { 0, 1 } },
+	};
 
-		// Array Buffer
-		glGenBuffers(1, &c_unitQuad.arrayBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, c_unitQuad.arrayBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(unitQuadVertices), unitQuadVertices, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// Array Buffer
+	glGenBuffers(1, &c_unitQuad.arrayBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, c_unitQuad.arrayBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(unitQuadVertices), unitQuadVertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		// Vertex Array Object
-		glGenVertexArrays(1, &c_unitQuad.vertexArrayObject);
-		setAttribPointer(c_unitQuad.vertexArrayObject, Attributes::Position, c_unitQuad.arrayBuffer, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-		setAttribPointer(c_unitQuad.vertexArrayObject, Attributes::TexCoord, c_unitQuad.arrayBuffer, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord));
-	}
+	// Vertex Array Object
+	glGenVertexArrays(1, &c_unitQuad.vertexArrayObject);
+	setAttribPointer(c_unitQuad.vertexArrayObject, Attributes::Position, c_unitQuad.arrayBuffer, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+	setAttribPointer(c_unitQuad.vertexArrayObject, Attributes::TexCoord, c_unitQuad.arrayBuffer, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, texCoord));
 }
 
 void renderUnitQuad()  {
@@ -292,8 +289,8 @@ struct WaterProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/water.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/water.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders//water.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/water.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -319,8 +316,8 @@ struct WaterProgram : public Program {
 struct CombineProgram : public Program {
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/combine.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/combine.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders/combine.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/combine.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -347,8 +344,8 @@ struct GroundProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/ground.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/ground.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders/ground.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/ground.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -382,8 +379,8 @@ struct SkyProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/sky.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/sky.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders/sky.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/sky.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -406,8 +403,8 @@ struct SimpleWaterProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/simplewater.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/simplewater.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders/simplewater.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/simplewater.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 	
@@ -428,8 +425,8 @@ struct TextureProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/texture.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/texture.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders/texture.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/texture.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -453,9 +450,9 @@ struct NormalsProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/Watersimulation/normals.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/Watersimulation/normals.geom", GL_GEOMETRY_SHADER),
-			std::make_tuple("content/Watersimulation/normals.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("content/shaders/normals.vert", GL_VERTEX_SHADER),
+			std::make_tuple("content/shaders/normals.geom", GL_GEOMETRY_SHADER),
+			std::make_tuple("content/shaders/normals.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -469,7 +466,7 @@ struct NormalsProgram : public Program {
 
 struct WaterSimulationProgram : public Program {
 	void initialize() {
-		id = createProgram({ std::make_tuple("content/Watersimulation/watersimulation.comp", GL_COMPUTE_SHADER) });
+		id = createProgram({ std::make_tuple("content/shaders/watersimulation.comp", GL_COMPUTE_SHADER) });
 	}
 
 	void dimension(int i) { glUniform1i(0, i); }
@@ -545,7 +542,7 @@ std::vector<Vertex> createMeshVertices(unsigned dimension, std::function<float(V
 	unsigned dimension1 = dimension + 1;
 	for0(x, dimension1) {
 		for0(y, dimension1) {
-			auto normalizedPosition = Vec2(x / float(dimension), y / float(dimension)); // [0,1]
+			auto normalizedPosition = Vec2(x / float(dimension), y / float(dimension));
 
 			const auto NORMAL_EPSILON = 0.1f / dimension;
 			auto epsilonPositionX = normalizedPosition + Vec2{ NORMAL_EPSILON, 0 };
@@ -716,7 +713,7 @@ GLFWwindow* createContext() {
 		quit("Could not initialize GLFW.");
 	}		
 
-	GLFWwindow* window = glfwCreateWindow(1200, 800, "Hello World", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1200, 800, "Watersimulation", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		quit("Could not create the window.");
@@ -749,9 +746,9 @@ GLFWwindow* createContext() {
 		}
 
 		switch (key) {
-			breakcase GLFW_KEY_F1: appData.wireframe = !appData.wireframe; printf("Wireframe: %s\n", appData.wireframe ? "on" : "off");
-			breakcase GLFW_KEY_F2: appData.normals = !appData.normals; printf("Normals: %s\n", appData.normals ? "on" : "off");
-			breakcase GLFW_KEY_F3: appData.manualCamera = !appData.manualCamera; printf("Camera: %s", appData.manualCamera ? "on" : "off");
+			breakcase GLFW_KEY_F1: appData.wireframe = !appData.wireframe;
+			breakcase GLFW_KEY_F2: appData.normals = !appData.normals;
+			breakcase GLFW_KEY_F3: appData.manualCamera = !appData.manualCamera;
 			breakcase GLFW_KEY_F5: appData.renderMode = RenderMode::Normal;
 			breakcase GLFW_KEY_F6: appData.renderMode = RenderMode::Background;
 			breakcase GLFW_KEY_F7: appData.renderMode = RenderMode::WaterMap;
@@ -1166,12 +1163,12 @@ GLuint createCubemap() {
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-	auto imagePositiveX = importImage("content/Watersimulation/sky_posx.jpg");
-	auto imageNegativeX = importImage("content/Watersimulation/sky_negx.jpg");
-	auto imagePositiveY = importImage("content/Watersimulation/sky_posy.jpg");
-	auto imageNegativeY = importImage("content/Watersimulation/sky_negy.jpg");
-	auto imagePositiveZ = importImage("content/Watersimulation/sky_posz.jpg");
-	auto imageNegativeZ = importImage("content/Watersimulation/sky_negz.jpg");
+	auto imagePositiveX = importImage("content/textures/sky_posx.jpg");
+	auto imageNegativeX = importImage("content/textures/sky_negx.jpg");
+	auto imagePositiveY = importImage("content/textures/sky_posy.jpg");
+	auto imageNegativeY = importImage("content/textures/sky_negy.jpg");
+	auto imagePositiveZ = importImage("content/textures/sky_posz.jpg");
+	auto imageNegativeZ = importImage("content/textures/sky_negz.jpg");
 
 	auto size = 2048;
 
@@ -1195,7 +1192,7 @@ GLuint createCubemap() {
 	return id;
 }
 
-void update() {
+void updateCamera() {
 	float cameraSpeed = 0.01f;
 
 	if (appData.moveDirection[Direction::Front]) appData.camera = glm::translate(appData.camera, Vec3{ 0, 0, -1 } * cameraSpeed);
@@ -1205,15 +1202,13 @@ void update() {
 	if (appData.moveDirection[Direction::Up])	 appData.camera = glm::translate(appData.camera, Vec3{ 0, +1, 0 } * cameraSpeed);
 	if (appData.moveDirection[Direction::Down])  appData.camera = glm::translate(appData.camera, Vec3{ 0, -1, 0 } * cameraSpeed);
 
-	if (appData.manualCamera)
-	{
+	if (appData.manualCamera) {
 		auto middle = Vec2{ appData.framebufferSize.x / 2.0f, appData.framebufferSize.y / 2.0f };
 		auto offset = middle - appData.mousePosition;
 
 		const auto rotationSpeed = 0.0001f;
 
-		if (appData.rightMouseButtonPressed)
-		{
+		if (appData.rightMouseButtonPressed) {
 			auto toVec3 = [](Vec4 v){ return Vec3{ v.x / v.w, v.y / v.w, v.z / v.w }; };
 
 			auto normalMatrix = glm::transpose(glm::inverse(appData.camera));
@@ -1238,7 +1233,7 @@ void simulateWater(const Mesh& waterMesh, const Mesh& terrain, float dt, float t
 	auto dimension = waterMesh.getSize() + 1;
 
 	appData.waterSimulationProgram.dimension(dimension);
-	appData.waterSimulationProgram.deltaTime(dt);
+	appData.waterSimulationProgram.deltaTime(std::min(1.0f / 60.0f, dt));
 	appData.waterSimulationProgram.time(time);
 	appData.waterSimulationProgram.noiseTexture(appData.noiseTexture);
 
@@ -1257,7 +1252,7 @@ int main(int argc, char* argv[]) {
 
 	appData.initialize();
 
-	initialize();
+	initializeUnitQuad();
 
 	int framebufferWidth, framebufferHeight;
 	glfwGetFramebufferSize(appData.window, &framebufferWidth, &framebufferHeight);
@@ -1275,10 +1270,10 @@ int main(int argc, char* argv[]) {
 	appData.lightViewMatrix = glm::lookAt(appData.lightPos, Vec3{ 0 }, Vec3{ 0, 1, 0 });
 
 	// textures
-	appData.debugTexture = importTexture("content/Watersimulation/debugTexture1.png");
-	appData.noiseTexture = importTexture("content/Watersimulation/noiseTexture.png");
-	appData.noiseNormalTexture = importTexture("content/Watersimulation/noiseNormalTexture.jpg");
-	appData.causticTexture = importTexture("content/Watersimulation/causticTexture.png");
+	appData.debugTexture = importTexture("content/textures/debugTexture1.png");
+	appData.noiseTexture = importTexture("content/textures/noiseTexture.png");
+	appData.noiseNormalTexture = importTexture("content/textures/noiseNormalTexture.jpg");
+	appData.causticTexture = importTexture("content/textures/causticTexture.png");
 	appData.subsurfaceScatteringTexture = createSubsurfaceScatteringTexture();
 
 	// cubemap
@@ -1310,7 +1305,9 @@ int main(int argc, char* argv[]) {
 	};
 	Mesh groundMesh(terrainSize, groundHeightFunction);
 
-	Mesh waterMesh(terrainSize, [](Vec2 coordinate) { return 0; });
+	Mesh waterMesh(terrainSize, [](Vec2 coordinate) { 
+		return 0;
+	});
 
 	FpsCounter fpsCounter;
 
@@ -1323,19 +1320,18 @@ int main(int argc, char* argv[]) {
 	while (!glfwWindowShouldClose(appData.window)) {
 		glfwSetWindowTitle(appData.window, std::to_string(fpsCounter.frame()).c_str());
 
-		update();
-
 		auto time = (float)glfwGetTime();
 		auto timeDelta = time - lastFrameTime;
 		lastFrameTime = time;
+
+		updateCamera();
+
 		simulateWater(waterMesh, groundMesh, timeDelta, time);
 
-		// render the scene
 		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh);
 
 		waterMesh.swapBuffers();
 
-		//glfwSwapInterval(0);
 		glfwSwapBuffers(appData.window);
 		glfwPollEvents();
 	}

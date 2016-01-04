@@ -55,34 +55,25 @@ void main() {
 
 		// v[i,j] = v[i,j] + f*∆t
 		position.w = position.w + f * DeltaTime;
-
-		//position.w += 0.001 * sin(20 * position.x * Time) ; //texture2D(NoiseTexture, vec2(gl_GlobalInvocationID.xy)).r
-		
+	
 		// unew[i,j] = u[i,j] + v[i]*∆t
 		position.y = position.y + position.w * DeltaTime;
 		
 		// Attenuation
 		position.w *= 0.997;
 
-		if (int(Time) % 8 == 0)
-		{
-			float efunction1 = (1.0 / sqrt(2.0 * 3.41)) * exp(-(1.0 / 2) * length(vec2(gl_GlobalInvocationID.xy) - vec2(100, 120)));
-			position.y += efunction1 * 0.01;
-				
-        
-			float efunction2 = (1.0 / sqrt(2.0 * 3.41)) * exp(-(1.0 / 2) * length(vec2(gl_GlobalInvocationID.xy) - vec2(80, 180)));
-			position.y += efunction2 * 0.03;				
+		if (int(Time) % 8 == 0) {		
+			vec2 p1 = vec2(Dimension * 0.1, Dimension * 0.9);
+			vec2 p2 = vec2(Dimension * 0.7, Dimension * 0.8);
+		
+			float efunction2 = (1.0 / sqrt(2.0 * 3.41)) * exp(-(1.0 / 2) * length(vec2(gl_GlobalInvocationID.xy) - p1));
+			position.y += efunction2 * 0.02;				
 			
-			float efunction3 = (1.0 / sqrt(2.0 * 3.41)) * exp(-(1.0 / 2) * length(vec2(gl_GlobalInvocationID.xy) - vec2(145, 180)));
-			position.y += efunction3 * 0.04;				
-        
+			float efunction3 = (1.0 / sqrt(2.0 * 3.41)) * exp(-(1.0 / 2) * length(vec2(gl_GlobalInvocationID.xy) - p2));
+			position.y += efunction3 * 0.02;
 		}
-					
-		
-		
-		//position.y = 0.0;
-		positionsNew[index] = position;	
 
+		positionsNew[index] = position;	
 		
 		vec4 normal = normals[index];
 		vec3 toPositiveX = positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(1, 0))].xyz;
@@ -94,7 +85,6 @@ void main() {
 		vec3 normal2 = cross(toPositiveY, toNegativeX);	
 		vec3 normal3 = cross(toNegativeX, toNegativeY);	
 		vec3 normal4 = cross(toNegativeY, toPositiveX);	
-		
 		
 		normals[index] = vec4(normalize(normal1 + normal2 + normal3 + normal4), 0.0);
 	}

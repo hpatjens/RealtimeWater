@@ -6,8 +6,7 @@ out vec4 FragColor;
 
 layout(binding = 0) uniform sampler2D Texture;
 
-void main()
-{	
+void main() {	
 	FragColor = texture2D(Texture, fTexCoord);
 }
 

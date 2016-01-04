@@ -12,14 +12,10 @@ layout(location = 2) uniform mat4 ProjectionMatrix;
 layout(location = 3) uniform mat3 NormalMatrix;
 layout(location = 4) uniform float NormalLength;
 
-void main()
-{	
-	for (int i = 0; i < gl_in.length(); ++i)
-	{
+void main() {
+	for (int i = 0; i < gl_in.length(); ++i) {
 		vec3 normal = gNormal[i] * 0.01;
 		vec3 worldNormal = NormalMatrix * normal;
-		
-		//vec3 position = gPosition[i].xyz / gPosition[i].w;
 		
 		vec4 worldPosition1 = WorldMatrix * gPosition[i];
 		vec4 worldPosition2 = WorldMatrix * (gPosition[i] + vec4(worldNormal, 0));
@@ -31,6 +27,5 @@ void main()
 		EmitVertex();
 		
 		EndPrimitive();
-	}
-	
+	}	
 }

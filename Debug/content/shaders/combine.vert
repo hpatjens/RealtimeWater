@@ -5,8 +5,7 @@ layout (location = 2) in vec2 vTexCoord;
 
 out vec2 fTexCoord;
 
-void main()
-{
+void main() {
 	fTexCoord = vTexCoord;
 	gl_Position = vPosition;
 }

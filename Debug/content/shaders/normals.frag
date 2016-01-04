@@ -4,8 +4,7 @@ out vec4 FragColor;
 
 layout(location = 5) uniform vec4 NormalColor;
 
-void main()
-{	
+void main() {	
 	FragColor = NormalColor;
 }
 

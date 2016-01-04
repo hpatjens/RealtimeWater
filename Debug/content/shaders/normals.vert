@@ -6,8 +6,7 @@ layout (location = 1) in vec3 vNormal;
 out vec4 gPosition;
 out vec3 gNormal;
 
-void main()
-{	
+void main() {	
 	gNormal = vNormal;
 	gPosition = vPosition;	
 	gl_Position = vPosition;

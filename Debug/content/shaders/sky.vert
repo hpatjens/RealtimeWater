@@ -10,8 +10,7 @@ layout(location = 0) uniform mat4 WorldMatrix;
 layout(location = 1) uniform mat4 ViewMatrix;
 layout(location = 2) uniform mat4 ProjectionMatrix;
 
-void main()
-{
+void main() {
 	fTexCoord = vTexCoord;
 	fPosition = vPosition;
 	gl_Position = fPosition;
