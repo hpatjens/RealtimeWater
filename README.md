@@ -15,7 +15,22 @@ The water-simulation is implemented in the compute shader.
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg)
 
 To make the simulation interesting the water is pulled up every few seconds by two gaussian bells.
-The normals are recalculated after each simulation step, which is visualized with the aid a geometry shader.
+The normals, which are visualized with the aid a geometry shader, are recalculated after each simulation step. See the following figure.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/2.jpg)
 
+The wireframe-view gives an impression of how dense the grid is. The following figure shows a view from below the surface.
+
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/3.jpg)
+
+When the ground is rendered without the water, you can see how the depth of the water affects the lighting through attenuation. On the right bottom you can be that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
+
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/4.jpg)
+
+The shore line did not get much attention. No foam was implemented but could be added based on the depth of the water seen from above. Shallower water would have stronger foam.
+
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/5.jpg)
+
+The following figure shows the water-surface seen from the light-source. To be able to distort the caustics, the normals of the water-surface are used. These can be obtained from this texture.
+
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/6.jpg)
