@@ -10,17 +10,15 @@ out vec4 FragColor;
 layout(location = 4) uniform mat4 WaterMapProjectionMatrix;
 layout(location = 5) uniform mat4 WaterMapViewMatrix;
 layout(location = 6) uniform vec3 LightPosition;
-layout(location = 7) uniform float GrassTextureScale;
-layout(location = 8) uniform float SandTextureScale;
-layout(location = 9) uniform float Time;
+layout(location = 7) uniform float TextureScale;
+layout(location = 8) uniform float Time;
 
 layout(binding = 0) uniform sampler2D WaterMapDepth;
 layout(binding = 1) uniform sampler2D WaterMapNormals;
-layout(binding = 2) uniform sampler2D GrassTexture;
-layout(binding = 3) uniform sampler2D SandTexture;
-layout(binding = 4) uniform sampler2D NoiseNormalTexture;
-layout(binding = 5) uniform sampler2D CausticTexture;
-layout(binding = 6) uniform sampler1D SubSurfaceScatteringTexture;
+layout(binding = 2) uniform sampler2D Texture;
+layout(binding = 3) uniform sampler2D NoiseNormalTexture;
+layout(binding = 4) uniform sampler2D CausticTexture;
+layout(binding = 5) uniform sampler1D SubSurfaceScatteringTexture;
 
 float inverseDepthRangeTransformation(float depth)
 {
@@ -69,9 +67,7 @@ void main()
 	vec4 surfaceLight = diffuseLight + AMBIENT_LIGHT_INTENSITY;
 	
 	// Ground texture
-	vec4 grassColor = texture2D(GrassTexture, fTexCoord * GrassTextureScale);
-	vec4 sandColor = texture2D(SandTexture, fTexCoord * SandTextureScale);
-	vec4 textureColor = mix(sandColor, grassColor, max(0, min(1, (fModelPosition.y) * 20)));
+	vec4 textureColor = texture2D(Texture, fTexCoord * TextureScale);
 
 	// Above or below water surface
 	if (waterMapCoordinate.z > waterZDepth) // unter water

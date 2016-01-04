@@ -340,9 +340,8 @@ struct GroundProgram : public Program {
 			WaterMapProjectionMatrix = 4,
 			WaterMapViewMatrix = 5,
 			LightPosition = 6,
-			GrassTextureScale = 7,
-			SandTextureScale = 8,
-			Time = 9,
+			TextureScale = 7,
+			Time = 8,
 		};
 	};
 
@@ -360,17 +359,15 @@ struct GroundProgram : public Program {
 	void waterMapProjectionMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WaterMapProjectionMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
 	void waterMapViewMatrix(const Mat4& m) { glUniformMatrix4fv(Uniforms::WaterMapViewMatrix, 1, GL_FALSE, glm::value_ptr(m)); }
 	void lightPosition(const Vec3& v) { glUniform3f(Uniforms::LightPosition, v.x, v.y, v.z); }
-	void grassTextureScale(float f) { glUniform1f(Uniforms::GrassTextureScale, f); }
-	void sandTextureScale(float f) { glUniform1f(Uniforms::SandTextureScale, f); }
+	void textureScale(float f) { glUniform1f(Uniforms::TextureScale, f); }
 	void time(float f) { glUniform1f(Uniforms::Time, f); }
 
 	void waterMapDepth(GLuint id) { glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, id); }
 	void waterMapNormals(GLuint id) { glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, id); }
-	void grassTexture(GLuint id) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, id); }
-	void sandTexture(GLuint id) { glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, id); }
-	void noiseNormalTexture(GLuint id) { glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, id); }
-	void causticTexture(GLuint id) { glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, id); }
-	void subSurfaceScatteringTexture(GLuint id) { glActiveTexture(GL_TEXTURE6); glBindTexture(GL_TEXTURE_1D, id); }
+	void texture(GLuint id) { glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, id); }
+	void noiseNormalTexture(GLuint id) { glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, id); }
+	void causticTexture(GLuint id) { glActiveTexture(GL_TEXTURE4); glBindTexture(GL_TEXTURE_2D, id); }
+	void subSurfaceScatteringTexture(GLuint id) { glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_1D, id); }
 };
 
 struct SkyProgram : public Program {
@@ -516,9 +513,7 @@ struct {
 
 	Vec2 framebufferSize;
 
-	GLuint debugTexture1;
-	GLuint grassTexture;
-	GLuint sandTexture;
+	GLuint debugTexture;
 	GLuint noiseTexture;
 	GLuint noiseNormalTexture;
 	GLuint causticTexture;
@@ -645,41 +640,34 @@ public:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)* m_indexCount, indices.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-
+		glGenVertexArrays(2, m_vertexArrayObject);
+		// VAO 1
+		setAttribPointer(m_vertexArrayObject[0], Attributes::Position, m_positionBuffer[0], 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), 0);
+		setAttribPointer(m_vertexArrayObject[0], Attributes::Normal, m_normalBuffer, 3, GL_FLOAT, GL_TRUE, sizeof(Vec4), 0);
+		setAttribPointer(m_vertexArrayObject[0], Attributes::TexCoord, m_texCoordBuffer, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), 0);
+		// VAO 2
+		setAttribPointer(m_vertexArrayObject[1], Attributes::Position, m_positionBuffer[1], 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), 0);
+		setAttribPointer(m_vertexArrayObject[1], Attributes::Normal, m_normalBuffer, 3, GL_FLOAT, GL_TRUE, sizeof(Vec4), 0);
+		setAttribPointer(m_vertexArrayObject[1], Attributes::TexCoord, m_texCoordBuffer, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), 0);
 	}
 
-	void render() const
-	{		
-		glBindBuffer(GL_ARRAY_BUFFER, m_positionBuffer[0]);
-		glEnableVertexAttribArray(Attributes::Position);
-		glVertexAttribPointer(Attributes::Position, 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
-		glEnableVertexAttribArray(Attributes::Normal);
-		glVertexAttribPointer(Attributes::Normal, 3, GL_FLOAT, GL_TRUE, sizeof(Vec4), nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
-		glEnableVertexAttribArray(Attributes::TexCoord);
-		glVertexAttribPointer(Attributes::TexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), nullptr);
-
+	void render() const {
+		glBindVertexArray(m_vertexArrayObject[0]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
-
 		glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
-
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		glDisableVertexAttribArray(Attributes::Position);
-		glDisableVertexAttribArray(Attributes::Normal);
-		glDisableVertexAttribArray(Attributes::TexCoord);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 
 	int getSize() const { return m_size; }
 	GLuint getPositionBuffer1() const { return m_positionBuffer[0]; }
 	GLuint getPositionBuffer2() const { return m_positionBuffer[1]; }
 	GLuint getNormalBuffer() const { return m_normalBuffer; }
-	void swapBuffers() { std::swap(m_positionBuffer[0], m_positionBuffer[1]); }
+
+	void swapBuffers() { 
+		std::swap(m_positionBuffer[0], m_positionBuffer[1]); 
+		std::swap(m_vertexArrayObject[0], m_vertexArrayObject[1]);
+	}
 
 private:
 	int m_size;
@@ -691,8 +679,7 @@ private:
 	unsigned m_indexCount;
 };
 
-FramebufferData createGeneralFramebuffer(const unsigned width, const unsigned height)
-{
+FramebufferData createGeneralFramebuffer(const unsigned width, const unsigned height) {
 	FramebufferData framebufferData;
 
 	glGenTextures(1, &framebufferData.colorTexture);
@@ -907,16 +894,14 @@ GLuint importTexture(const std::string& filename) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, id);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE); // <---- test this
-
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // GL_REPEAT
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // GL_REPEAT
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dataPtr);
 
-	glGenerateMipmap(GL_TEXTURE_2D); // <---- test this
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -1035,17 +1020,8 @@ void render(const float dt, const Mat4& projectionMatrix, const Mesh& waterMesh,
 		
 			appData.groundProgram.waterMapDepth(appData.waterMapFramebuffer.depthTexture);
 			appData.groundProgram.waterMapNormals(appData.waterMapFramebuffer.colorTexture);
-#if DEBUG_TEXTURE || 1
-			appData.groundProgram.grassTexture(appData.debugTexture1);
-			appData.groundProgram.sandTexture(appData.debugTexture1);
-			appData.groundProgram.grassTextureScale(24.0f);
-			appData.groundProgram.sandTextureScale(24.0f);
-#else
-			appData.groundProgram.grassTexture(appData.grassTexture);
-			appData.groundProgram.sandTexture(appData.sandTexture);
-			appData.groundProgram.grassTextureScale(24.0f);
-			appData.groundProgram.sandTextureScale(36.0f);
-#endif
+			appData.groundProgram.texture(appData.debugTexture);
+			appData.groundProgram.textureScale(24.0f);		
 			appData.groundProgram.noiseNormalTexture(appData.noiseNormalTexture);
 			appData.groundProgram.causticTexture(appData.causticTexture);
 			appData.groundProgram.subSurfaceScatteringTexture(appData.subsurfaceScatteringTexture);
@@ -1299,9 +1275,7 @@ int main(int argc, char* argv[]) {
 	appData.lightViewMatrix = glm::lookAt(appData.lightPos, Vec3{ 0 }, Vec3{ 0, 1, 0 });
 
 	// textures
-	appData.debugTexture1 = importTexture("content/Watersimulation/debugTexture1.png");
-	appData.grassTexture = importTexture("content/Watersimulation/grassTexture.jpg");
-	appData.sandTexture = importTexture("content/Watersimulation/sandTexture.jpg");
+	appData.debugTexture = importTexture("content/Watersimulation/debugTexture1.png");
 	appData.noiseTexture = importTexture("content/Watersimulation/noiseTexture.png");
 	appData.noiseNormalTexture = importTexture("content/Watersimulation/noiseNormalTexture.jpg");
 	appData.causticTexture = importTexture("content/Watersimulation/causticTexture.png");
