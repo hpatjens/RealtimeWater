@@ -39,7 +39,7 @@ void main() {
 	
 	if (gl_GlobalInvocationID.x > 0 && gl_GlobalInvocationID.x < Dimension - 1 &&
 		gl_GlobalInvocationID.y > 0 && gl_GlobalInvocationID.y < Dimension - 1 &&
-		positionsOld[index].y - terrainPositions[index].y > -0.002)
+		terrainPositions[index].y < 0) // The simulation should only happen when the terrain is below the water. 
 	{	
 		vec4 position = positionsOld[index];
 		float c = 0.1;
@@ -62,7 +62,7 @@ void main() {
 		position.y = position.y + position.w * DeltaTime;
 		
 		// Attenuation
-		position.w *= 0.995;
+		position.w *= 0.997;
 
 		if (int(Time) % 8 == 0)
 		{

@@ -547,12 +547,12 @@ struct {
 
 std::vector<Vertex> createMeshVertices(unsigned dimension, std::function<float(Vec2)> heightFunction) {
 	std::vector<Vertex> vertices;
-	auto cellSize = 1.0f / dimension;
-	for0(x, dimension + 1) {
-		for0(y, dimension + 1) {
-			const auto NORMAL_EPSILON = cellSize / 10.0f;
+	unsigned dimension1 = dimension + 1;
+	for0(x, dimension1) {
+		for0(y, dimension1) {
+			auto normalizedPosition = Vec2(x / float(dimension), y / float(dimension)); // [0,1]
 
-			auto normalizedPosition = Vec2{ x / float(dimension), y / float(dimension) }; // [0,1]
+			const auto NORMAL_EPSILON = 0.1f / dimension;
 			auto epsilonPositionX = normalizedPosition + Vec2{ NORMAL_EPSILON, 0 };
 			auto epsilonPositionY = normalizedPosition + Vec2{ 0, NORMAL_EPSILON };
 
@@ -563,7 +563,7 @@ std::vector<Vertex> createMeshVertices(unsigned dimension, std::function<float(V
 			auto position = Vec3{ normalizedPosition.x, currentHeight, normalizedPosition.y };
 
 			auto toEpsilonX = Vec3{ epsilonPositionX.x, epsilonHeightX, epsilonPositionX.y } - position;
-			auto toEpsilonY = Vec3{ epsilonPositionY.x, epsilonHeightY, epsilonPositionY.y } -position;
+			auto toEpsilonY = Vec3{ epsilonPositionY.x, epsilonHeightY, epsilonPositionY.y } - position;
 
 			auto normal = glm::normalize(glm::cross(toEpsilonY, toEpsilonX));
 
@@ -576,19 +576,18 @@ std::vector<Vertex> createMeshVertices(unsigned dimension, std::function<float(V
 
 std::vector<GLuint> createMeshIndices(unsigned dimension) {
 	std::vector<GLuint> indices;
-	const GLuint verticesPerRow = dimension + 1;
+	unsigned verticesPerRow = dimension + 1;
 	for0(x, dimension) {
 		for0(y, dimension) {
-			// triangle 1
+			// Triangle 1
 			indices.push_back(y * verticesPerRow + x);
 			indices.push_back(y * verticesPerRow + (x + 1));
 			indices.push_back((y + 1) * verticesPerRow + (x + 1));
 
-			// triangle 2
+			// Triangle 2
 			indices.push_back(y * verticesPerRow + x);
 			indices.push_back((y + 1) * verticesPerRow + (x + 1));
 			indices.push_back((y + 1) * verticesPerRow + x);
-
 		}
 	}
 	return indices;
@@ -604,22 +603,7 @@ public:
 
 		auto vertexCount = (size + 1) * (size + 1);
 		m_indexCount = size * size * 6;
-
-		//for0(i, vertices.size()) {
-		//	auto x = i % (size + 1);
-		//	auto y = i / (size + 1);
-		//	vertices[i].position.y = heightFunction(Vec2(x / float(size), y / float(size)));
-		//}			
-
-		for0(i, vertices.size()) {
-			auto x = i % (size + 1);
-			auto y = i / (size + 1);
-			auto index = [&](int x, int y){ return y*(size + 1) + x; };
-			auto toPositiveX = vertices[index(std::min<int>(x + 1, size), y)].position - vertices[i].position;
-			auto toPositiveY = vertices[index(x, std::min<int>(y + 1, size))].position - vertices[i].position;
-			vertices[i].normal = x < size && y < size ? glm::normalize(glm::cross(toPositiveX, toPositiveY)) : Vec3{ 0, 1, 0 };
-		}
-
+		
 		std::vector<Vec4> positionData;
 		for0(i, vertices.size()) {
 			positionData.push_back(Vec4{ vertices[i].position, 0.0 });
@@ -660,6 +644,8 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)* m_indexCount, indices.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
 	}
 
 	void render() const
@@ -670,11 +656,11 @@ public:
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_normalBuffer);
 		glEnableVertexAttribArray(Attributes::Normal);
-		glVertexAttribPointer(Attributes::Normal, 3, GL_FLOAT, GL_TRUE, sizeof(Vec4), reinterpret_cast<void*>(sizeof(Vec4)));
+		glVertexAttribPointer(Attributes::Normal, 3, GL_FLOAT, GL_TRUE, sizeof(Vec4), nullptr);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m_texCoordBuffer);
 		glEnableVertexAttribArray(Attributes::TexCoord);
-		glVertexAttribPointer(Attributes::TexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), reinterpret_cast<void*>(sizeof(Vec4) * 2));
+		glVertexAttribPointer(Attributes::TexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), nullptr);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementArrayBuffer);
 
@@ -689,12 +675,11 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	int dimension() const { return m_size; }
-
-	GLuint positionBuffer1() const { return m_positionBuffer[0]; }
-	GLuint positionBuffer2() const { return m_positionBuffer[1]; }
-	GLuint normalBuffer() const { return m_normalBuffer; }
-	void swapBuffer() { std::swap(m_positionBuffer[0], m_positionBuffer[1]); }
+	int getSize() const { return m_size; }
+	GLuint getPositionBuffer1() const { return m_positionBuffer[0]; }
+	GLuint getPositionBuffer2() const { return m_positionBuffer[1]; }
+	GLuint getNormalBuffer() const { return m_normalBuffer; }
+	void swapBuffers() { std::swap(m_positionBuffer[0], m_positionBuffer[1]); }
 
 private:
 	int m_size;
@@ -702,7 +687,7 @@ private:
 	GLuint m_normalBuffer;
 	GLuint m_texCoordBuffer;
 	GLuint m_elementArrayBuffer;
-	GLuint m_vertexArrayObject;
+	GLuint m_vertexArrayObject[2];
 	unsigned m_indexCount;
 };
 
@@ -1274,17 +1259,17 @@ void update() {
 void simulateWater(const Mesh& waterMesh, const Mesh& terrain, float dt, float time) {
 	glUseProgram(appData.waterSimulationProgram.id);
 
-	auto dimension = waterMesh.dimension() + 1;
+	auto dimension = waterMesh.getSize() + 1;
 
 	appData.waterSimulationProgram.dimension(dimension);
 	appData.waterSimulationProgram.deltaTime(dt);
 	appData.waterSimulationProgram.time(time);
 	appData.waterSimulationProgram.noiseTexture(appData.noiseTexture);
 
-	appData.waterSimulationProgram.positionBuffer1(waterMesh.positionBuffer1());
-	appData.waterSimulationProgram.positionBuffer2(waterMesh.positionBuffer2());
-	appData.waterSimulationProgram.normalBuffer(waterMesh.normalBuffer());
-	appData.waterSimulationProgram.terrainPositionsBuffer(terrain.positionBuffer1());
+	appData.waterSimulationProgram.positionBuffer1(waterMesh.getPositionBuffer1());
+	appData.waterSimulationProgram.positionBuffer2(waterMesh.getPositionBuffer2());
+	appData.waterSimulationProgram.normalBuffer(waterMesh.getNormalBuffer());
+	appData.waterSimulationProgram.terrainPositionsBuffer(terrain.getPositionBuffer1());
 
 	glDispatchCompute(dimension, dimension, 1);
 
@@ -1374,7 +1359,7 @@ int main(int argc, char* argv[]) {
 		// render the scene
 		render(timeDelta, appData.projectionMatrix, waterMesh, groundMesh);
 
-		waterMesh.swapBuffer();
+		waterMesh.swapBuffers();
 
 		//glfwSwapInterval(0);
 		glfwSwapBuffers(appData.window);
