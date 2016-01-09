@@ -12,15 +12,19 @@ To give the impression of subsurface-scattering and shift in color a look-up tex
 Caustics are achieved by projecting a texture onto the ground. Nothing real here either.
 To give the impression of small ripples on the water a normals are read from a normal-map.
 
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg)
+
 The water-simulation is implemented in the compute shader. The importent line are the following:
 
 ```cpp
+vec4 position = positionsOld[index];
+
 // f = c^2*(u[i+1,j]+u[i-1,j]+u[i,j+1]+u[i,j-1] – 4u[i,j])/h^2
 float f = c * c * (
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(-1, 0))].y + 
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(+1, 0))].y + 
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(0, -1))].y + 
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(0, +1))].y - 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(-1,  0))].y + 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 1,  0))].y + 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 0, -1))].y + 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 0,  1))].y - 
 	4.0 * position.y) / (h * h);	
 
 // v[i,j] = v[i,j] + f*∆t
@@ -30,7 +34,7 @@ position.w = position.w + f * DeltaTime;
 position.y = position.y + position.w * DeltaTime;
 ```
 
-![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg)
+The vertices of the water surface are altered by the compute shader using a double buffering. This ensures results, that are independent of the execution order of the compute shader threads. *positionsOld* referes to the vertex positions from the previous frame. *position* holds the position of the vertex, that is currently computed. The w component of the position stores the velocity of that water column. The last line alters the height of the current vertex, which is the y-coordinate.
 
 To make the simulation interesting the water is pulled up every few seconds by two gaussian bells.
 The normals, which are visualized with the aid a geometry shader, are recalculated after each simulation step. See the following figure.
