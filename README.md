@@ -2,7 +2,8 @@
 
 In this project a water-simulation was implemented based on the approach suggested in the presentation "Fast Water Simulation for Games Using Height Fields" by Matthias Müller-Fischer. Decent effort was invested to make the result visually pleasing.
 
-You can find the presentation with this link: http://matthias-mueller-fischer.ch/talks/GDC2008.pdf
+Follow this link to view the presentation: http://matthias-mueller-fischer.ch/talks/GDC2008.pdf
+I included the pdf in the repository as well in case of the document being offline in the future.
 
 Everything is rendered with OpenGL 4.3 at real-time frame rates applying a simple ad-hoc shading. 
 Multiple rendering passes are used to determine the depth of water and calculating fake refractions of the ground. 
