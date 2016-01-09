@@ -34,14 +34,14 @@ position.w = position.w + f * DeltaTime;
 position.y = position.y + position.w * DeltaTime;
 ```
 
-The vertices of the water surface are altered by the compute shader using a double buffering. This ensures results, that are independent of the execution order of the compute shader threads. *positionsOld* referes to the vertex positions from the previous frame. *position* holds the position of the vertex, that is currently computed. The w component of the position stores the velocity of that water column. The last line alters the height of the current vertex, which is the y-coordinate.
+The vertices of the water surface are altered by the compute shader using a double buffering. This ensures results that are independent of the execution order of the compute shader threads. *positionsOld* referes to the vertex positions from the previous frame. *position* holds the position of the vertex, that is currently computed. The w component of the position stores the velocity of that water column. The last line alters the height of the current vertex, which is the y-coordinate.
 
 To make the simulation interesting the water is pulled up every few seconds by two gaussian bells.
 The normals, which are visualized with the aid a geometry shader, are recalculated after each simulation step. See the following figure.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/2.jpg)
 
-The wireframe-view gives an impression of how dense the grid is. The following figure shows a view from below the surface.
+The wireframe-view gives an impression of how dense the grid is. The following figure shows a view from below the surface. The shaders are not setup for under-water rendering. This could be done by applying the sample principles (attenuation and subsurface-color shift) that are used for the rendering of the ground.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/3.jpg)
 
