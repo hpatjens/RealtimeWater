@@ -12,7 +12,23 @@ To give the impression of subsurface-scattering and shift in color a look-up tex
 Caustics are achieved by projecting a texture onto the ground. Nothing real here either.
 To give the impression of small ripples on the water a normals are read from a normal-map.
 
-The water-simulation is implemented in the compute shader.
+The water-simulation is implemented in the compute shader. The importent line are the following:
+
+```cpp
+// f = c^2*(u[i+1,j]+u[i-1,j]+u[i,j+1]+u[i,j-1] – 4u[i,j])/h^2
+float f = c * c * (
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(-1, 0))].y + 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(+1, 0))].y + 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(0, -1))].y + 
+	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(0, +1))].y - 
+	4.0 * position.y) / (h * h);	
+
+// v[i,j] = v[i,j] + f*∆t
+position.w = position.w + f * DeltaTime;
+
+// unew[i,j] = u[i,j] + v[i]*∆t
+position.y = position.y + position.w * DeltaTime;
+```
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg)
 
