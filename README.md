@@ -45,7 +45,7 @@ The wireframe-view gives an impression of how dense the grid is. The following f
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/3.jpg)
 
-When the ground is rendered without the water, you can see how the depth of the water affects the lighting through attenuation. On the right bottom you can be that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
+When the ground is rendered without the water, you can see how the depth of the water affects the lighting through attenuation. On the right bottom you can see that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/4.jpg)
 
