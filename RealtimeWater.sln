@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RealtimeWater", "RealtimeWater\RealtimeWater.vcxproj", "{11F7DE41-B33A-4D35-9E4F-242B99B37FFB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RealtimeWater", "vs\RealtimeWater.vcxproj", "{11F7DE41-B33A-4D35-9E4F-242B99B37FFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

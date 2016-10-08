@@ -1,0 +1,96 @@
+﻿Der Buildvorgang wurde am 08.10.2016 21:26:29 gestartet.
+     1>Projekt "G:\Daten\Softwareentwicklung\Local\RealtimeWater\Watersimulation\Watersimulation.vcxproj" auf Knoten "2", Build Ziel(e).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         main.cpp
+     1>c:\program files (x86)\microsoft visual studio 12.0\vc\include\xrefwrap(283): warning C4244: 'return': Konvertierung von 'int' in 'float', möglicher Datenverlust
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(228): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "_Ret std::_Callable_obj<main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>,false>::_ApplyX<_Rx,_Ty>(_Ty &&)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Rx=float
+         ,            _Ty=Vec2
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(228): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "_Ret std::_Callable_obj<main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>,false>::_ApplyX<_Rx,_Ty>(_Ty &&)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Rx=float
+         ,            _Ty=Vec2
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(226): Bei der Kompilierung der  Klassen-template der float std::_Func_impl<_MyWrapper,_Alloc,_Ret,Vec2>::_Do_call(Vec2 &&)-Memberfunktion
+                 with
+                 [
+                     _Alloc=std::allocator<std::_Func_class<float,Vec2>>
+         ,            _Ret=float
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(495): Siehe Verweis auf die Instanziierung der gerade kompilierten Klassen-template "std::_Func_impl<_MyWrapper,_Alloc,_Ret,Vec2>".
+                 with
+                 [
+                     _Alloc=std::allocator<std::_Func_class<float,Vec2>>
+         ,            _Ret=float
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(396): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "void std::_Func_class<_Ret,Vec2>::_Do_alloc<_Myimpl,_Ty,_Alloc>(_Fty &&,_Alloc)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Ty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Alloc=std::allocator<std::_Func_class<float,Vec2>>
+         ,            _Fty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(396): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "void std::_Func_class<_Ret,Vec2>::_Do_alloc<_Myimpl,_Ty,_Alloc>(_Fty &&,_Alloc)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Ty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Alloc=std::allocator<std::_Func_class<float,Vec2>>
+         ,            _Fty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(385): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "void std::_Func_class<_Ret,Vec2>::_Reset_alloc<_Ty,std::allocator<std::_Func_class<_Ret,Vec2>>>(_Fty &&,_Alloc)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Ty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Fty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Alloc=std::allocator<std::_Func_class<float,Vec2>>
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(385): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "void std::_Func_class<_Ret,Vec2>::_Reset_alloc<_Ty,std::allocator<std::_Func_class<_Ret,Vec2>>>(_Fty &&,_Alloc)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Ty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Fty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Alloc=std::allocator<std::_Func_class<float,Vec2>>
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(671): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "void std::_Func_class<_Ret,Vec2>::_Reset<_Ty>(_Fty &&)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Ty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Fty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+                 ]
+                 c:\program files (x86)\microsoft visual studio 12.0\vc\include\functional(671): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "void std::_Func_class<_Ret,Vec2>::_Reset<_Ty>(_Fty &&)".
+                 with
+                 [
+                     _Ret=float
+         ,            _Ty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+         ,            _Fty=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+                 ]
+                 g:\daten\softwareentwicklung\local\realtimewater\watersimulation\main.cpp(1288): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "std::function<float (Vec2)>::function<main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>>(_Fx &&)".
+                 with
+                 [
+                     _Fx=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+                 ]
+                 g:\daten\softwareentwicklung\local\realtimewater\watersimulation\main.cpp(1288): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "std::function<float (Vec2)>::function<main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>>(_Fx &&)".
+                 with
+                 [
+                     _Fx=main::<lambda_85fbc50af4666bec13e1aaa5337db6f5>
+                 ]
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\Debug\RealtimeWater.exe" /INCREMENTAL /NOLOGO /LIBPATH:G:\Daten\Softwareentwicklung\Local\RealtimeWater\/libraries/glew/bin/win /LIBPATH:G:\Daten\Softwareentwicklung\Local\RealtimeWater\/libraries/glfw/bin/win opengl32.lib glfw3.lib glew32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\Debug\RealtimeWater.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\Debug\RealtimeWater.lib" /MACHINE:X86 /ignore:4099 Debug\main.obj
+         Watersimulation.vcxproj -> G:\Daten\Softwareentwicklung\Local\RealtimeWater\Debug\RealtimeWater.exe
+     1>Die Erstellung des Projekts "G:\Daten\Softwareentwicklung\Local\RealtimeWater\Watersimulation\Watersimulation.vcxproj" ist abgeschlossen, Build Ziel(e).
+
+Build erfolgreich.
+
+Verstrichene Zeit 00:00:00.97
