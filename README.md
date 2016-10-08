@@ -83,10 +83,25 @@ This is of course a very approximated model that assumes homogenous density dist
 |-------|-------|
 |<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/attenuation.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/4.jpg" alt="alt text" width="500"> |
 
+### Color Shift
+To immitate spectral effects that change the color of the water a lookup table is used to control the change of colors in different depths. The table is implemented as a simple 1D texture.
+
+```cpp
+struct Pixel  { GLubyte r, g, b; };
+
+const int size = 3;
+Pixel data[3];
+data[0] = Pixel{ 2, 204, 147 };
+data[1] = Pixel{ 2, 127, 199 };
+data[2] = Pixel{ 1, 9, 100 };
+
+...
+
+glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, size, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+```
+
+### Normals
+
 Because the simulation constantly changes the water surface, the normals have to be recalculated every frame. The geometry shader is used to verify the calculations.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/2.jpg)
-
-The shore line did not get much attention. No foam was implemented but could be added based on the depth of the water seen from above or the velocities of the water columns in the w component of the vertices.
-
-![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/5.jpg)
