@@ -1,15 +1,14 @@
-Watersimulation.sdf
-Watersimulation.v12.suo
-Watersimulation.opensdf
+RealtimeWater.sdf
+RealtimeWater.v12.suo
+RealtimeWater.opensdf
 
-Watersimulation/Debug
+RealtimeWater/Debug
 
 Debug/*
-!Debug/Watersimulation.exe
-!Debug/corona.dll
+!Debug/RealtimeWater.exe
 !Debug/glew32.dll
 !Debug/content
 
-Watersimulation/watersimulation.vcxproj.user
+RealtimeWater/RealtimeWater.vcxproj.user
 
-Watersimulation/Watersimulation/Debug/*
+RealtimeWater/RealtimeWater/Debug/*
