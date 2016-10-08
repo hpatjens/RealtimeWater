@@ -14,7 +14,7 @@ To give the impression of subsurface-scattering and shift in color a look-up tex
 Caustics are achieved by projecting a texture onto the ground. Nothing real here either.
 To give the impression of small ripples on the water a normals are read from a normal-map.
 
-![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg)
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/docs/images/1.jpg)
 
 |Key|Function|
 |---|---|
@@ -65,21 +65,21 @@ The first framebuffer contains the water surface which is rendered from the posi
 
 |Orthographic projection|Normal buffer|
 |-------|-------|
-|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/watermap.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/6.jpg" alt="alt text" width="500"> |
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/watermap.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/6.jpg" alt="alt text" width="500"> |
 
 ### 2. Background 
 The ground (without the water on top) is rendered from the viewers position. This framebuffer stores the color of the pixels and the depth from the viewer. This buffer as well as the third is rendered on full resolution.
 
 |Perspective projection|Color buffer|
 |-------|-------|
-|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/background.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/backgroundbuffer.jpg" alt="alt text" width="500"> |
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/background.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/backgroundbuffer.jpg" alt="alt text" width="500"> |
 
 ### 3. Water 
 The water surface is rendered from the viewers position.
 
 |Perspective projection|Color buffer|
 |-------|-------|
-|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/water.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/waterbuffer.jpg" alt="alt text" width="500"> |
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/water.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/waterbuffer.jpg" alt="alt text" width="500"> |
 
 ### Default framebuffer
 Finally the second and third buffer are combined and rendered onto the default framebuffer.
@@ -93,7 +93,7 @@ This is of course a very approximated model that assumes homogenous density dist
 
 |Perspective projection|Color buffer (depth buffer is not shown)|
 |-------|-------|
-|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/attenuation.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg" alt="alt text" width="500"> |
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/attenuation.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/docs/images/1.jpg" alt="alt text" width="500"> |
 
 ### Color Shift
 To immitate spectral effects that change the color of the water a lookup table is used to control the change of colors in different depths. The table is implemented as a simple 1D texture.
@@ -116,4 +116,4 @@ glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, size, 0, GL_RGB, GL_UNSIGNED_BYTE, data)
 
 Because the simulation constantly changes the water surface, the normals have to be recalculated every frame. The geometry shader is used to verify the calculations.
 
-![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/2.jpg)
+![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/docs/images/2.jpg)
