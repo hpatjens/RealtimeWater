@@ -81,7 +81,7 @@ This is of course a very approximated model that assumes homogenous density dist
 
 |Perspective projection|Color buffer (depth buffer is not shown)|
 |-------|-------|
-|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/attenuation.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/4.jpg" alt="alt text" width="500"> |
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/attenuation.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg" alt="alt text" width="500"> |
 
 ### Color Shift
 To immitate spectral effects that change the color of the water a lookup table is used to control the change of colors in different depths. The table is implemented as a simple 1D texture.
