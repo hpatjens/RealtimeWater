@@ -46,17 +46,46 @@ To make the simulation interesting the water is pulled up every few seconds by t
 
 ## Rendering
 
+There are 3 framebuffers on which the rendering operates.
+
+### 1. Watermap
+The first framebuffer contains the water surface which is rendered from the position of the light source using an orthographic projection. A depth buffer and a color buffer is rendered. The color buffer is made up of 3 channels that store the normals of the water surface. This buffer has a resolution of 1024x1024.
+
+|Orthographic projection|Normal buffer (depth buffer is not shown)|
+|-------|-------|
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/watermap.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/6.jpg" alt="alt text" width="500"> |
+
+### 2. Background 
+The ground (without the water on top) is rendered from the viewers position. This framebuffer stores the color of the pixels and the depth from the viewer. This buffer as well as the third is rendered on full resolution.
+
+|Perspective projection|Color buffer (depth buffer is not shown)|
+|-------|-------|
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/background.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/backgroundbuffer.jpg" alt="alt text" width="500"> |
+
+### 3. Water 
+The water surface is rendered from the viewers position.
+
+|Perspective projection|Color buffer (depth buffer is not shown)|
+|-------|-------|
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/water.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/waterbuffer.jpg" alt="alt text" width="500"> |
+
+### Default framebuffer
+Finally the second and third buffer are combined and rendered onto the default framebuffer.
+
+### Attenuation
+The light gets attenuated by the water on the way to the ground and on the way to the camera. From the watermap we can get the distance the light travels on the way to the ground by projecting the currently processed fragment onto the watermap and calculating the difference to the stored value (w). The attentuation on the way to the viewer can be obtained by calulating the difference between the water fragment and the depth value that is stored in the background buffer (b).
+
+When the ground is rendered without the water, you can see how the depth of the water affects the lighting. On the right bottom you can see that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
+
+This is of course a very approximated model that assumes homogenous density distribution and no scattering at all.
+
+|Perspective projection|Color buffer (depth buffer is not shown)|
+|-------|-------|
+|<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/attenuation.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/4.jpg" alt="alt text" width="500"> |
+
 Because the simulation constantly changes the water surface, the normals have to be recalculated every frame. The geometry shader is used to verify the calculations.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/2.jpg)
-
-The following figure shows the water-surface seen from the light-source. Besides the shown buffer there is also a depth buffer rendered to provide the distance of the water surface to the light source. The normals are needed to distort the caustics that are projected onto the ground.
-
-![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/6.jpg)
-
-When the ground is rendered without the water, you can see how the depth of the water affects the lighting through attenuation. On the right bottom you can see that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
-
-![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/4.jpg)
 
 The shore line did not get much attention. No foam was implemented but could be added based on the depth of the water seen from above or the velocities of the water columns in the w component of the vertices.
 
