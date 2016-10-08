@@ -2,6 +2,7 @@
 *.suo
 *.opensdf
 *.user
+*.ilk
 
 bin/Debug/*
 !Debug/RealtimeWater.exe
