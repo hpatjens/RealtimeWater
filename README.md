@@ -16,6 +16,18 @@ To give the impression of small ripples on the water a normals are read from a n
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/1.jpg)
 
+|Key|Function|
+|---|---|
+|ESC|Quit|
+|F1|Wireframe|
+|F2|Show Normals|
+|F3|Free-fly|
+|F4|-|
+|F5|Render all|
+|F6|Render ground|
+|F7|Render watermap|
+|F8|Render water|
+
 ## Simulation
 
 The simulation directly operates on the vertices of the water mesh. This ties the simulation and rendering accuracy directly together which can be a drawback when it comes to dynamically scaling the rendering workload to ensure constant framerates. (Which is not happening in this application.) A huge benefit is the possibility to let the vertex and compute shader operate on the same buffer object. While rendering the buffer is interpreted via the *GL_ARRAY_BUFFER* target and for the simulation it is provided to the compute shader via the *GL_STORAGE_BUFFER* target.
