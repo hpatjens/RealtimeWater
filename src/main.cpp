@@ -292,8 +292,8 @@ struct WaterProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders//water.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/water.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders//water.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/water.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -319,8 +319,8 @@ struct WaterProgram : public Program {
 struct CombineProgram : public Program {
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders/combine.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/combine.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders/combine.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/combine.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -347,8 +347,8 @@ struct GroundProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders/ground.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/ground.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders/ground.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/ground.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -382,8 +382,8 @@ struct SkyProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders/sky.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/sky.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders/sky.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/sky.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -406,8 +406,8 @@ struct SimpleWaterProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders/simplewater.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/simplewater.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders/simplewater.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/simplewater.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 	
@@ -428,8 +428,8 @@ struct TextureProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders/texture.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/texture.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders/texture.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/texture.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -453,9 +453,9 @@ struct NormalsProgram : public Program {
 
 	void initialize() {
 		id = createProgram({
-			std::make_tuple("content/shaders/normals.vert", GL_VERTEX_SHADER),
-			std::make_tuple("content/shaders/normals.geom", GL_GEOMETRY_SHADER),
-			std::make_tuple("content/shaders/normals.frag", GL_FRAGMENT_SHADER) 
+			std::make_tuple("../../content/shaders/normals.vert", GL_VERTEX_SHADER),
+			std::make_tuple("../../content/shaders/normals.geom", GL_GEOMETRY_SHADER),
+			std::make_tuple("../../content/shaders/normals.frag", GL_FRAGMENT_SHADER) 
 		});
 	}
 
@@ -469,7 +469,7 @@ struct NormalsProgram : public Program {
 
 struct WaterSimulationProgram : public Program {
 	void initialize() {
-		id = createProgram({ std::make_tuple("content/shaders/watersimulation.comp", GL_COMPUTE_SHADER) });
+		id = createProgram({ std::make_tuple("../../content/shaders/watersimulation.comp", GL_COMPUTE_SHADER) });
 	}
 
 	void dimension(int i) { glUniform1i(0, i); }
@@ -1141,12 +1141,12 @@ GLuint createCubemap() {
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
-	auto imagePositiveX = importImage("content/textures/sky_posx.jpg");
-	auto imageNegativeX = importImage("content/textures/sky_negx.jpg");
-	auto imagePositiveY = importImage("content/textures/sky_posy.jpg");
-	auto imageNegativeY = importImage("content/textures/sky_negy.jpg");
-	auto imagePositiveZ = importImage("content/textures/sky_posz.jpg");
-	auto imageNegativeZ = importImage("content/textures/sky_negz.jpg");
+	auto imagePositiveX = importImage("../../content/textures/sky_posx.jpg");
+	auto imageNegativeX = importImage("../../content/textures/sky_negx.jpg");
+	auto imagePositiveY = importImage("../../content/textures/sky_posy.jpg");
+	auto imageNegativeY = importImage("../../content/textures/sky_negy.jpg");
+	auto imagePositiveZ = importImage("../../content/textures/sky_posz.jpg");
+	auto imageNegativeZ = importImage("../../content/textures/sky_negz.jpg");
 
 	auto size = 2048;
 
@@ -1248,10 +1248,10 @@ int main(int argc, char* argv[]) {
 	appData.lightViewMatrix = glm::lookAt(appData.lightPos, Vec3{ 0 }, Vec3{ 0, 1, 0 });
 
 	// textures
-	appData.debugTexture = importTexture("content/textures/debugTexture1.png");
-	appData.noiseTexture = importTexture("content/textures/noiseTexture.png");
-	appData.noiseNormalTexture = importTexture("content/textures/noiseNormalTexture.jpg");
-	appData.causticTexture = importTexture("content/textures/causticTexture.png");
+	appData.debugTexture = importTexture("../../content/textures/debugTexture1.png");
+	appData.noiseTexture = importTexture("../../content/textures/noiseTexture.png");
+	appData.noiseNormalTexture = importTexture("../../content/textures/noiseNormalTexture.jpg");
+	appData.causticTexture = importTexture("../../content/textures/causticTexture.png");
 	appData.subsurfaceScatteringTexture = createSubsurfaceScatteringTexture();
 
 	// cubemap
