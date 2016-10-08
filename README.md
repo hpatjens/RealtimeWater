@@ -23,14 +23,14 @@ The simulation directly operates on the vertices of the water mesh. This ties th
 These lines implement the above mentioned simulation method:
 
 ```cpp
-vec4 position = positionsOld[index];
+vec4 position = positionsPrev[index];
 
 // f = c^2*(u[i+1,j]+u[i-1,j]+u[i,j+1]+u[i,j-1] – 4u[i,j])/h^2
 float f = c * c * (
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2(-1,  0))].y + 
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 1,  0))].y + 
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 0, -1))].y + 
-	positionsOld[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 0,  1))].y - 
+	positionsPrev[clampedIndex(gl_GlobalInvocationID.xy + uvec2(-1,  0))].y + 
+	positionsPrev[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 1,  0))].y + 
+	positionsPrev[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 0, -1))].y + 
+	positionsPrev[clampedIndex(gl_GlobalInvocationID.xy + uvec2( 0,  1))].y - 
 	4.0 * position.y) / (h * h);	
 
 // v[i,j] = v[i,j] + f*∆t
