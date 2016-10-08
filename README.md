@@ -1,4 +1,4 @@
-# Watersimulation
+# Real-time Water
 
 In this project a water-simulation was implemented based on the approach suggested in the presentation "*[Fast Water Simulation for Games Using Height Fields](http://matthias-mueller-fischer.ch/talks/GDC2008.pdf)*" by Matthias Müller-Fischer. Some effort was invested to make the result visually pleasing.
 
