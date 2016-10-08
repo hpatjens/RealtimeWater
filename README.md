@@ -1,12 +1,13 @@
 # Watersimulation
 
-In this project a water-simulation was implemented based on the approach suggested in the presentation "*Fast Water Simulation for Games Using Height Fields*" by Matthias Müller-Fischer. Some effort was invested to make the result visually pleasing.
+In this project a water-simulation was implemented based on the approach suggested in the presentation "*[Fast Water Simulation for Games Using Height Fields](http://matthias-mueller-fischer.ch/talks/GDC2008.pdf)*" by Matthias Müller-Fischer. Some effort was invested to make the result visually pleasing.
 
-You can find the presentation [here](http://matthias-mueller-fischer.ch/talks/GDC2008.pdf).
-I included the [document](https://github.com/hpatjens/Watersimulation/tree/master/documentation/Fast Water Simulation for Games Using Height Fields - Matthias Müller-Fischer.pdf) in the repository as well in case of the document being offline in the future.
+I included the [document](https://github.com/hpatjens/Watersimulation/tree/master/documentation/Fast Water Simulation for Games Using Height Fields - Matthias Müller-Fischer.pdf) in this repository as well in case of the document being offline in the future.
+
+This is my first attempt to simulate and render water. This is not a tutorial or even an attempt to do things right. Just keep this in mind when you browse the code.
 
 The water simulation is based on the method that Fischer proposes for 2D heightfields and implemented using the compute shader.
-Everything is rendered with OpenGL 4.3 at real-time frame rates applying a simple ad-hoc shading. 
+Everything is rendered with OpenGL 4.3 at real-time frame rates applying a simple ad-hoc shading - this is not a PBR renderer.
 Multiple rendering passes are used to determine the depth of the water and calculating fake refractions of the ground. 
 Light is attenuated by the water based on the distance the light has to travel inside the medium.
 To give the impression of subsurface-scattering and shift in color a look-up texture is used.
@@ -49,7 +50,7 @@ Because the simulation constantly changes the water surface, the normals have to
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/2.jpg)
 
-The following figure shows the water-surface seen from the light-source. To be able to distort the caustics, the normals of the water-surface are used. These can be obtained from this texture.
+The following figure shows the water-surface seen from the light-source. Besides the shown buffer there is also a depth buffer rendered to provide the distance of the water surface to the light source. The normals are needed to distort the caustics that are projected onto the ground.
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/images/6.jpg)
 
