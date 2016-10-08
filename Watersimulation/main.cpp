@@ -41,7 +41,8 @@
 #include "gtc/matrix_transform.hpp"
 #include "gtx/transform.hpp"
 
-#include "corona.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 // ------------------------------------------------------------------------------------------------------
 // Defines
@@ -848,43 +849,13 @@ GLuint createDebugTexture(int width, int height, int cellSize = 32) {
 	return id;
 }
 
-corona::Image* importImage(const std::string& filename) {
-	auto extension = filename.substr(filename.find_last_of(".") + 1);
-	std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-
-	corona::FileFormat format;
-	if (extension == "jpg" || extension == "jpeg") {
-		format = corona::FileFormat::FF_JPEG;
-	} else if (extension == "bmp") {
-		format = corona::FileFormat::FF_BMP;
-	} else if (extension == "gif") {
-		format = corona::FileFormat::FF_GIF;
-	} else if (extension == "png") {
-		format = corona::FileFormat::FF_PNG;
-	} else if (extension == "pcx") {
-		format = corona::FileFormat::FF_PCX;
-	} else if (extension == "tga") {
-		format = corona::FileFormat::FF_TGA;
-	} else {
-		quit("Format of image %s is not supported.\n", filename.c_str());
-	}
-
-	auto imageOriginal = corona::OpenImage(filename.c_str(), format);
-	auto imageConverted = corona::ConvertImage(imageOriginal, corona::PixelFormat::PF_R8G8B8A8);
-
-	return imageConverted;
-}
-
 GLuint importTexture(const std::string& filename) {
-	auto imageConverted = importImage(filename);
+	int width, height, n;
+	unsigned char* dataPtr = stbi_load(filename.c_str(), &width, &height, &n, 4);
 
-	auto dataPtr = static_cast<char*>(imageConverted->getPixels());
-	auto pixelCount = imageConverted->getHeight() * imageConverted->getWidth();
+	auto pixelCount = width*height;
 
-	std::vector<unsigned char> data{ dataPtr, dataPtr + pixelCount * 4 };
-
-	auto width = static_cast<unsigned>(imageConverted->getWidth());
-	auto height = static_cast<unsigned>(imageConverted->getHeight());
+	std::vector<unsigned char> data(dataPtr, dataPtr + pixelCount * 4);
 
 	GLuint id;
 	glGenTextures(1, &id);
@@ -1158,6 +1129,11 @@ private:
 	double m_lastTime = glfwGetTime();
 };
 
+unsigned char* importImage(const std::string& filename) {
+	int x, y, n;
+	return stbi_load(filename.c_str(), &x, &y, &n, 4);
+}
+
 GLuint createCubemap() {
 	GLuint id;
 	glGenTextures(1, &id);
@@ -1172,12 +1148,12 @@ GLuint createCubemap() {
 
 	auto size = 2048;
 
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagePositiveX->getPixels());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageNegativeX->getPixels());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagePositiveY->getPixels());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageNegativeY->getPixels());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagePositiveZ->getPixels());
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageNegativeZ->getPixels());
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagePositiveX);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageNegativeX);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagePositiveY);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageNegativeY);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imagePositiveZ);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageNegativeZ);
 
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
