@@ -1,14 +1,10 @@
-RealtimeWater.sdf
-RealtimeWater.v12.suo
-RealtimeWater.opensdf
+*.sdf
+*.suo
+*.opensdf
+*.user
 
-RealtimeWater/Debug
-
-Debug/*
+bin/Debug/*
 !Debug/RealtimeWater.exe
 !Debug/glew32.dll
-!Debug/content
 
-RealtimeWater/RealtimeWater.vcxproj.user
-
-RealtimeWater/RealtimeWater/Debug/*
+visual studio/RealtimeWater/Debug
