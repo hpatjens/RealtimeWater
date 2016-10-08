@@ -51,21 +51,21 @@ There are 3 framebuffers on which the rendering operates.
 ### 1. Watermap
 The first framebuffer contains the water surface which is rendered from the position of the light source using an orthographic projection. A depth buffer and a color buffer is rendered. The color buffer is made up of 3 channels that store the normals of the water surface. This buffer has a resolution of 1024x1024.
 
-|Orthographic projection|Normal buffer (depth buffer is not shown)|
+|Orthographic projection|Normal buffer|
 |-------|-------|
 |<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/watermap.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/6.jpg" alt="alt text" width="500"> |
 
 ### 2. Background 
 The ground (without the water on top) is rendered from the viewers position. This framebuffer stores the color of the pixels and the depth from the viewer. This buffer as well as the third is rendered on full resolution.
 
-|Perspective projection|Color buffer (depth buffer is not shown)|
+|Perspective projection|Color buffer|
 |-------|-------|
 |<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/background.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/backgroundbuffer.jpg" alt="alt text" width="500"> |
 
 ### 3. Water 
 The water surface is rendered from the viewers position.
 
-|Perspective projection|Color buffer (depth buffer is not shown)|
+|Perspective projection|Color buffer|
 |-------|-------|
 |<img src="https://github.com/thehenkk/Watersimulation/blob/master/documentation/images/water.png" alt="alt text" width="500">|<img src="https://github.com/thehenkk/Watersimulation/blob/master/images/waterbuffer.jpg" alt="alt text" width="500"> |
 
