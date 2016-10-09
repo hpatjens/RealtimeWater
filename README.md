@@ -19,7 +19,14 @@ To give the impression of small ripples on the water a normals are read from a n
 ## Installation
 
 ### Linux
-There is a *compile.sh* script you can execute.
+There is a *compile.sh* script you can execute. The needed packages are listed in the following table. 
+
+|Package|Installation on Ubuntu|
+|---|---|
+|GLEW|`sudo apt-get install libglew-dev`|
+|GLFW|`sudo apt-get install libglfw3-dev`|
+
+Execute `sudo apt-get update` before installing the libraries.
 
 ### Windows
 There is a visual studio project in the *visual studio* folder.
