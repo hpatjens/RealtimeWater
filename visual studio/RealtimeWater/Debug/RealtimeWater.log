@@ -1,4 +1,4 @@
-﻿Der Buildvorgang wurde am 08.10.2016 22:35:25 gestartet.
+﻿Der Buildvorgang wurde am 09.10.2016 11:25:54 gestartet.
      1>Projekt "G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\RealtimeWater\RealtimeWater.vcxproj" auf Knoten "2", Build Ziel(e).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\src\main.cpp
@@ -76,21 +76,22 @@
          ,            _Ty=main::<lambda_c45023b779c66367bddbc5f6870a47df>
          ,            _Fty=main::<lambda_c45023b779c66367bddbc5f6870a47df>
                  ]
-                 g:\daten\softwareentwicklung\local\realtimewater\src\main.cpp(1288): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "std::function<float (Vec2)>::function<main::<lambda_c45023b779c66367bddbc5f6870a47df>>(_Fx &&)".
+                 g:\daten\softwareentwicklung\local\realtimewater\src\main.cpp(1284): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "std::function<float (Vec2)>::function<main::<lambda_c45023b779c66367bddbc5f6870a47df>>(_Fx &&)".
                  with
                  [
                      _Fx=main::<lambda_c45023b779c66367bddbc5f6870a47df>
                  ]
-                 g:\daten\softwareentwicklung\local\realtimewater\src\main.cpp(1288): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "std::function<float (Vec2)>::function<main::<lambda_c45023b779c66367bddbc5f6870a47df>>(_Fx &&)".
+                 g:\daten\softwareentwicklung\local\realtimewater\src\main.cpp(1284): Siehe Verweis auf die Instanziierung der gerade kompilierten Funktions-template "std::function<float (Vec2)>::function<main::<lambda_c45023b779c66367bddbc5f6870a47df>>(_Fx &&)".
                  with
                  [
                      _Fx=main::<lambda_c45023b779c66367bddbc5f6870a47df>
                  ]
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\..\bin\Debug\RealtimeWater.exe" /INCREMENTAL /NOLOGO /LIBPATH:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\../libs/glew/bin" /LIBPATH:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\../libs/glfw/bin" opengl32.lib glew32.lib glfw3.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\..\bin\Debug\RealtimeWater.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\..\bin\Debug\RealtimeWater.lib" /MACHINE:X86 /ignore:4099 Debug\main.obj
+     1>LINK : warning LNK4098: Standardbibliothek "LIBCMTD" steht in Konflikt mit anderen Bibliotheken; /NODEFAULTLIB:Bibliothek verwenden.
          RealtimeWater.vcxproj -> G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\..\bin\Debug\RealtimeWater.exe
      1>Die Erstellung des Projekts "G:\Daten\Softwareentwicklung\Local\RealtimeWater\visual studio\RealtimeWater\RealtimeWater.vcxproj" ist abgeschlossen, Build Ziel(e).
 
 Build erfolgreich.
 
-Verstrichene Zeit 00:00:00.99
+Verstrichene Zeit 00:00:01.03

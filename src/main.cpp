@@ -14,26 +14,28 @@
 #include <cstdio>
 #include <cstdarg>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include <algorithm>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <map>
-#define _USE_MATH_DEFINES
-#include <math.h>
-#include <numeric>
 #include <set>
-#include <streambuf>
 #include <string>
-#include <tuple>
 #include <vector>
 
 // ------------------------------------------------------------------------------------------------------
 // External Libraries
 // ------------------------------------------------------------------------------------------------------
+#ifdef _WIN32 
+#include "glew.h"
+#include "glfw3.h"
+#else
 #include "GL/glew.h"
-#include "GL/gl.h"
 #include "GLFW/glfw3.h"
+#endif
 
 #define GLM_FORCE_RADIANS
 #include "glm.hpp"
@@ -152,21 +154,6 @@ struct Errors {
 	enum { EverythingFine = 0, Fatal = 1 };
 };
 
-void quit(const char *format, ...) {
-	va_list arg;
-	int done;
-
-	va_start(arg, format);
-	done = fprintf(stderr, format, arg);
-	va_end(arg);
-
-#if defined(_DEBUG) && defined(_MSC_VER)
-	__debugbreak();
-#endif
-
-	exit(Errors::Fatal);
-}
-
 enum class RenderMode { 
 	Normal, 
 	Background, 
@@ -214,8 +201,7 @@ void checkShaderLog(GLuint shaderId) {
 		glGetShaderInfoLog(shaderId, length, &length, logBuffer.data());
 
 		printf("Shaderlog: %s\n", logBuffer.data());
-
-		quit("Shaderlog: %s\n", logBuffer.data());
+		exit(Errors::Fatal);
 	}
 }
 
@@ -228,7 +214,8 @@ void checkProgramLog(GLuint programId) {
 		logBuffer.resize(length);
 		glGetProgramInfoLog(programId, length, &length, logBuffer.data());
 
-		quit("Programlog: %s\n", logBuffer.data());
+		printf("Programlog: %s\n", logBuffer.data());
+		exit(Errors::Fatal);
 	}
 }
 
@@ -714,7 +701,8 @@ FramebufferData createGeneralFramebuffer(const unsigned width, const unsigned he
 
 GLFWwindow* createContext() {
 	if (!glfwInit()) {
-		quit("Could not initialize GLFW.");
+		printf("Could not initialize GLFW.");
+		exit(Errors::Fatal);
 	}		
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -724,7 +712,8 @@ GLFWwindow* createContext() {
 	GLFWwindow* window = glfwCreateWindow(1200, 800, "Watersimulation", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
-		quit("Could not create the window.");
+		printf("Could not create the window.");
+		exit(Errors::Fatal);
 	}
 
 	glfwMakeContextCurrent(window);
@@ -734,7 +723,8 @@ GLFWwindow* createContext() {
 		if (!GLEW_ARB_debug_output) {
 			printf("Could not load ARB_debug_output!");
 		}
-		quit("Could not initialize GLEW.");
+		printf("Could not initialize GLEW.");
+		exit(Errors::Fatal);
 	}
 
 	glfwSetKeyCallback(window, [](GLFWwindow*, int key, int, int action, int modifier) {
