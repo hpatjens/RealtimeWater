@@ -16,6 +16,16 @@ To give the impression of small ripples on the water a normals are read from a n
 
 ![alt tag](https://github.com/thehenkk/Watersimulation/blob/master/docs/images/1.jpg)
 
+## Installation
+
+### Linux
+There is a *compile.sh* script you can execute.
+
+### Windows
+There is a visual studio project in the *visual studio* folder.
+
+## Keys
+
 |Key|Function|
 |---|---|
 |ESC|Quit|
@@ -27,14 +37,6 @@ To give the impression of small ripples on the water a normals are read from a n
 |F6|Render ground|
 |F7|Render watermap|
 |F8|Render water|
-
-## Installation
-
-### Linux
-There is a *compile.sh* script you can execute.
-
-### Windows
-There is a visual studio project in the *visual studio* folder.
 
 ## Simulation
 
