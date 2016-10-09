@@ -3,7 +3,7 @@
 // Description: Real-time water using a compute shader
 //
 // Author: Henrik Patjens
-// Date: 5.1.2015
+// Date: January 5, 2015
 //
 // ------------------------------------------------------------------------------------------------------
 
