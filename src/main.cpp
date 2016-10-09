@@ -31,8 +31,9 @@
 // ------------------------------------------------------------------------------------------------------
 // External Libraries
 // ------------------------------------------------------------------------------------------------------
-#include "glew.h"
-#include "glfw3.h"
+#include "GL/glew.h"
+#include "GL/gl.h"
+#include "GLFW/glfw3.h"
 
 #define GLM_FORCE_RADIANS
 #include "glm.hpp"
@@ -716,6 +717,10 @@ GLFWwindow* createContext() {
 		quit("Could not initialize GLFW.");
 	}		
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
 	GLFWwindow* window = glfwCreateWindow(1200, 800, "Watersimulation", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
@@ -723,7 +728,7 @@ GLFWwindow* createContext() {
 	}
 
 	glfwMakeContextCurrent(window);
-
+    
 	glewExperimental = true;
 	if (glewInit()) {
 		if (!GLEW_ARB_debug_output) {
@@ -784,7 +789,8 @@ GLFWwindow* createContext() {
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 		glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 			if (type == GL_DEBUG_TYPE_ERROR_ARB) {
-				quit("GLEW_ARB_debug_output: %s\n", message);
+                printf("GLEW_ARB_debug_output: %s\n", message);
+				exit(1);
 			}
 		}, nullptr);
 		glEnable(GL_DEBUG_OUTPUT);
@@ -809,7 +815,7 @@ GLuint createSubsurfaceScatteringTexture() {
 
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, size, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
