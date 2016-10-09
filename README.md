@@ -62,7 +62,7 @@ position.w = position.w + f * DeltaTime;
 position.y = position.y + position.w * DeltaTime;
 ```
 
-The vertices of the water surface are altered by the compute shader using a double buffering. This ensures results that are independent of the execution order of the compute shader threads. *positionsOld* referes to the vertex positions from the previous frame. *position* holds the position of the vertex, that is currently computed. The w component of the position stores the velocity of that water column. The last line alters the height of the current vertex, which is the y-coordinate.
+The vertices of the water surface are altered by the compute shader using a double buffering. This ensures results that are independent of the execution order of the compute shader threads. *positionsPrev* refers to the vertex positions from the previous frame. *position* holds the position of the vertex, that is currently computed. The w component of the position stores the velocity of that water column. The last line alters the height of the current vertex, which is the y-coordinate.
 
 To make the simulation interesting the water is pulled up every few seconds by two gaussian bells.
 
@@ -97,7 +97,7 @@ Finally the second and third buffer are combined and rendered onto the default f
 ### Attenuation
 The light gets attenuated by the water on the way to the ground and on the way to the camera. From the watermap we can get the distance the light travels on the way to the ground by projecting the currently processed fragment onto the watermap and calculating the difference to the stored value (w). The attentuation on the way to the viewer can be obtained by calulating the difference between the water fragment and the depth value that is stored in the background buffer (b).
 
-When the ground is rendered without the water, you can see how the depth of the water affects the lighting. On the right bottom you can see that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
+When the ground is rendered without the water, you can see how the depth of the water affects the lighting. On the right bottom in this [image](https://github.com/thehenkk/Watersimulation/blob/master/docs/images/4.jpg) you can see that individual waves are included in the depth-calculation. High waves result in a stronger attenuation and therefore a darker ground. Additionally you can see some distortion in the caustics happen.
 
 This is of course a very approximated model that assumes homogenous density distribution and no scattering at all.
 
